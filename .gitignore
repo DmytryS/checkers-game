@@ -1,0 +1,4 @@
+.vscode
+.idea
+/logs/*
+node_modules
