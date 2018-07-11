@@ -4,8 +4,9 @@
         "type": "mongo",
         "url": "mongodb://127.0.0.1:27017/smart-grid-manager'"
     },
-    "log4js": {
-        "path": "logs"
+    "logger": {
+        "path": "logs",
+        "filename": "checkers-game.log"
     },
     "baseUrl": "/api/v1/",
     "mail": {
