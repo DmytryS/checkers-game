@@ -17,6 +17,7 @@
     "jade": "~1.11.0",
     "log4js": "^2.10.0",
     "mongoose": "^5.2.2",
+    "nodemailer": "^4.6.7",
     "react": "^16.0.0",
     "react-bootstrap": "^0.31.3",
     "react-dom": "^16.0.0",
