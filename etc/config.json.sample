@@ -19,5 +19,6 @@
                 "pass" : "password"
             }
         }
-    }
+    },
+    "JWTsecretKey": "Sample_Key"
 }

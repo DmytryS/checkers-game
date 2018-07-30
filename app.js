@@ -1,6 +1,4 @@
-'use strict';
-
 require('babel-register')({
-  presets: [ 'es2015' ]
+  retainLines: true
 });
-require('./lib/service');
+require('./lib/service').start();

@@ -3,12 +3,13 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "watch": "webpack --watch -d",
     "start": "node ./app.js",
+    "nodemon": "nodemon --exec node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "axios": "^0.16.2",
+    "babel-cli": "^6.26.0",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-register": "^6.26.0",
     "bluebird": "^3.5.1",
@@ -16,8 +17,10 @@
     "cookie-parser": "~1.4.3",
     "express": "^4.16.3",
     "jade": "~1.11.0",
+    "jsonwebtoken": "^8.3.0",
     "log4js": "^2.10.0",
     "mongoose": "^5.2.2",
+    "node-validator": "^0.1.27",
     "nodemailer": "^4.6.7",
     "react": "^16.0.0",
     "react-bootstrap": "^0.31.3",
