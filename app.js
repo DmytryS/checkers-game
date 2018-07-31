@@ -1,4 +1,8 @@
 require('babel-register')({
-  retainLines: true
+    retainLines: true
 });
-require('./lib/service').start();
+
+const Service = require('./lib/service');
+const service = new Service();
+
+service.start();

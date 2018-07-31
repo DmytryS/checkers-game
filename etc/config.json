@@ -2,7 +2,7 @@
     "port": 3000,
     "db": {
         "type": "mongo",
-        "url": "mongodb://127.0.0.1:27017/smart-grid-manager'"
+        "url": "mongodb://127.0.0.1:27017/checkers-app"
     },
     "logger": {
         "path": "logs",
