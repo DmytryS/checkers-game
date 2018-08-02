@@ -15,10 +15,12 @@
             "host"    : "smpt.gmail.com",
             "service" : "Gmail",
             "auth"    : {
-                "user" : "user@gmail.com",
-                "pass" : "password"
+                "user" : "no.reply.checkers.app@gmail.com",
+                "pass" : "Checkers1Password"
             }
         }
     },
-    "JWTsecretKey": "Sample_Key"
+    "JWTsecret": "Sample_Key",
+    "saltRounds": 5,
+    "minPasswordLength": 6
 }

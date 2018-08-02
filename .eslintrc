@@ -160,6 +160,10 @@
       "require-yield": 2
     },
     "parserOptions": {
-      "sourceType": "module"
+      "sourceType": "module",
+      "ecmaVersion": 9,
+      "ecmaFeatures": {
+        "spread": true
+      }
     }
   }
