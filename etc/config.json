@@ -22,5 +22,6 @@
     },
     "JWTsecret": "Sample_Key",
     "saltRounds": 5,
-    "minPasswordLength": 6
+    "minPasswordLength": 6,
+    "uiUrl": "http://212.66.61.148/ui"
 }
