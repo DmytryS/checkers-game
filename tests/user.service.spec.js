@@ -131,7 +131,7 @@ describe('UserService', () => {
                 .post('/api/v1/user/resetPassword')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
-                .send({ email: 'some@mail.com', name: 'Dmytry' })
+                .send({ email: 'some@mail.com' })
                 .expect(200)
                 .end();
 
@@ -146,6 +146,45 @@ describe('UserService', () => {
                 .send({ email: 'other@mail.com' })
                 .expect(404)
                 .end();
+        });
+    });
+
+    describe.only('SessionCreate', () => {
+        it('should return 200 if session created', async () => {
+            const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
+
+            await user.setPassword('password');
+            await user.save();
+
+            const result = await request(server)
+                .post('/api/v1/user/session/create')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ email: 'some@mail.com', password: 'password' })
+                .expect(200)
+                .end()
+                .get('body');
+
+            console.log(JSON.stringify(result));
+            
+        });
+    });
+
+    describe('SessionRenew', () => {
+        it('should return 200 if reset password email sent', async () => {
+            const emailStub = sandbox.stub(mailSender, 'send').returns(Promise.resolve());
+
+            await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
+
+            await request(server)
+                .post('/api/v1/user/resetPassword')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ email: 'some@mail.com', name: 'Dmytry' })
+                .expect(200)
+                .end();
+
+            sinon.assert.calledWith(emailStub, { email: 'some@mail.com', templateName: 'RESET_PASSWORD', sendData: { actionId: sinon.match.string, name: 'Dmytry' } });
         });
     });
 });
