@@ -4,6 +4,7 @@ import App from '../lib/service';
 import mailSender from '../lib/mailSender';
 import request from 'supertest-promised';
 import User from '../lib/models/User';
+import Action from '../lib/models/Action';
 
 const configuration = {
     baseUrl: '/api/v1',
@@ -92,6 +93,31 @@ describe('UserService', () => {
                 message: 'User with name of \'Petro\' already exists'
             });
             emailStub.notCalled.should.be.true();
+        });
+    });
+
+    describe('ActivateUser', () => {
+        it('should return 200 if user activated', async () => {
+            const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
+            const action = await new Action({ userId: user.id, type: 'REGISTER' }).save();
+
+            await request(server)
+                .post(`/api/v1/action/${action.id}`)
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ password: 'SomePassword123' })
+                .expect(200)
+                .end();
+        });
+        
+        it('should return 400 if action not exists', async () => {
+            await request(server)
+                .post('/api/v1/action/aaaaaaaaaaaaaaaaaaaaaaaa')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ password: 'SomePassword123' })
+                .expect(404)
+                .end();
         });
     });
 });

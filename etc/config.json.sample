@@ -20,5 +20,6 @@
             }
         }
     },
-    "JWTsecretKey": "Sample_Key"
+    "secretKey": "Sample_Key",
+    "saltRounds": "12"
 }
