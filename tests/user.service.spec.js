@@ -49,7 +49,7 @@ describe('UserService', () => {
                 .end()
                 .get('body');
     
-            sinon.assert.calledWith(emailStub, { email: 'some@email.com', templateName: 'REGISTER', sendData: { actionId: sinon.match.string } });
+            sinon.assert.calledWith(emailStub, { email: 'some@email.com', templateName: 'REGISTER', sendData: { actionId: sinon.match.string, name: 'userName' } });
             response.should.have.property('id');
         });
 
@@ -110,12 +110,40 @@ describe('UserService', () => {
                 .end();
         });
         
-        it('should return 400 if action not exists', async () => {
+        it('should return 404 if action not exists', async () => {
             await request(server)
                 .post('/api/v1/action/aaaaaaaaaaaaaaaaaaaaaaaa')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send({ password: 'SomePassword123' })
+                .expect(404)
+                .end();
+        });
+    });
+
+    describe('RestoreUserPassword', () => {
+        it('should return 200 if reset password email sent', async () => {
+            const emailStub = sandbox.stub(mailSender, 'send').returns(Promise.resolve());
+
+            await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
+
+            await request(server)
+                .post('/api/v1/user/resetPassword')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ email: 'some@mail.com', name: 'Dmytry' })
+                .expect(200)
+                .end();
+
+            sinon.assert.calledWith(emailStub, { email: 'some@mail.com', templateName: 'RESET_PASSWORD', sendData: { actionId: sinon.match.string, name: 'Dmytry' } });
+        });
+        
+        it('should return 404 if user not found', async () => {
+            await request(server)
+                .post('/api/v1/user/resetPassword')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ email: 'other@mail.com' })
                 .expect(404)
                 .end();
         });
