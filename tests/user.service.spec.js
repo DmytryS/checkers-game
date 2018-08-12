@@ -9,7 +9,7 @@ import Action from '../lib/models/Action';
 const configuration = {
     baseUrl: '/api/v1',
     db: {
-        url: 'mongodb://127.0.0.1:27017/checkers-app-test'
+        url: 'mongodb://127.0.0.1:27017/checkers-be-test'
     },
     logger: {
         path: 'logs',
@@ -166,7 +166,7 @@ describe('UserService', () => {
                 .get('body');
 
             console.log(JSON.stringify(result));
-            
+
         });
     });
 

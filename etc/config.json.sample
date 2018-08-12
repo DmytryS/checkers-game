@@ -21,7 +21,7 @@
         }
     },
     "secretKey": "Sample_Key",
-    "saltRounds": "12",
+    "saltRounds": 12,
     "minPasswordLength": 6,
     "uiUrl": "http://localhost"
 }
