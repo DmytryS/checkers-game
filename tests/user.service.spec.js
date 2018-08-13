@@ -13,7 +13,7 @@ const configuration = {
     },
     logger: {
         path: 'logs',
-        filename: 'checkers-game-test.log'
+        filename: 'checkers-be-test.log'
     },
     port: 3000
 };
@@ -149,7 +149,7 @@ describe('UserService', () => {
         });
     });
 
-    describe.only('SessionCreate', () => {
+    describe('SessionCreate', () => {
         it('should return 200 if session created', async () => {
             const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
 
@@ -157,7 +157,7 @@ describe('UserService', () => {
             await user.save();
 
             const result = await request(server)
-                .post('/api/v1/user/session/create')
+                .post('/api/v1/user/sessions/create')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send({ email: 'some@mail.com', password: 'password' })
@@ -165,26 +165,129 @@ describe('UserService', () => {
                 .end()
                 .get('body');
 
-            console.log(JSON.stringify(result));
+            sinon.assert.match(
+                result,
+                {
+                    token: sinon.match.string,
+                    expiresIn: sinon.match.string
+                }
+            );
+        });
 
+        it('should return 401 if failed to create session', async () => {
+            await request(server)
+                .post('/api/v1/user/sessions/create')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ email: 'some123@mail.com', password: 'password123' })
+                .expect(401)
+                .end();
         });
     });
 
     describe('SessionRenew', () => {
-        it('should return 200 if reset password email sent', async () => {
-            const emailStub = sandbox.stub(mailSender, 'send').returns(Promise.resolve());
+        it('should return 200 if renewed token', async () => {
+            const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
 
-            await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
-
-            await request(server)
-                .post('/api/v1/user/resetPassword')
+            await user.setPassword('somePass');
+            
+            const resultWithOldToken = await request(server)
+                .post('/api/v1/user/sessions/create')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
-                .send({ email: 'some@mail.com', name: 'Dmytry' })
+                .send({ email: 'some@mail.com', password: 'somePass' })
                 .expect(200)
-                .end();
+                .end()
+                .get('body');
 
-            sinon.assert.calledWith(emailStub, { email: 'some@mail.com', templateName: 'RESET_PASSWORD', sendData: { actionId: sinon.match.string, name: 'Dmytry' } });
+            const result = await request(server)
+                .post('/api/v1/user/sessions/renew')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .set('Authorization', resultWithOldToken.token)
+                .send()
+                .expect(200)
+                .end()
+                .get('body');
+
+            sinon.assert.match(
+                result,
+                {
+                    token: sinon.match.string,
+                    expiresIn: sinon.match.string
+                }
+            );
+        });
+    });
+
+    describe('UserInfo', async () => {
+        const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
+
+        await user.setPassword('somePass');
+        const { token } = await request(server)
+            .post('/api/v1/user/sessions/create')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
+            .send({ email: 'some@mail.com', password: 'somePass' })
+            .expect(200)
+            .end()
+            .get('body');
+
+        it('should return 200 if returned user info', async () => {
+            const response = await request(server)
+                .get('/api/v1/user')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .set('Authorization', token)
+                .send()
+                .expect(200)
+                .end()
+                .get('body');
+
+    
+            should.equal(response, { email: 'some@mail.com', name: 'Dmytry', id: sinon.match.string });
+        });
+    });
+
+    describe('UserUpdate', async () => {
+        const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
+
+        await user.setPassword('somePass');
+        const { token } = await request(server)
+            .post('/api/v1/user/sessions/create')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
+            .send({ email: 'some@mail.com', password: 'somePass' })
+            .expect(200)
+            .end()
+            .get('body');
+
+        it('should return 200 if user updated', async () => {
+            const response = await request(server)
+                .post('/api/v1/user')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .set('Authorization', token)
+                .send({ email: 'other@mail.com', name: 'Petrovich' })
+                .expect(200)
+                .end()
+                .get('body');
+
+    
+            should.equal(response, { email: 'other@mail.com', name: 'Petrovich' });
+        });
+        
+        it('should return 400 if failed to update user when email already exists', async () => {
+            await new User({ email: 'other@mail.com', name: 'Dmytry' }).save();
+
+            await request(server)
+                .post('/api/v1/user')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .set('Authorization', token)
+                .send({ email: 'other@mail.com', name: 'Petrovich' })
+                .expect(400)
+                .end();
         });
     });
 });
