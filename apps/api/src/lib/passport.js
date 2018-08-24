@@ -3,10 +3,10 @@ import moment from 'moment';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import jwt from 'jsonwebtoken';
-import User from './models/User';
+import User from '../models/User';
 import { UnauthorizedError } from './errorHandler';
-import config from '../etc/config';
-import { dumpUser } from './services/utils';
+import config from '../../config/config';
+import { dumpUser } from './utils';
 
 passport.use(
     new LocalStrategy(

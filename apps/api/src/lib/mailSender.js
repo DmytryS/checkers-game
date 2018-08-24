@@ -4,7 +4,7 @@ import { promisify, promisifyAll } from 'bluebird';
 import path from 'path';
 import fs from 'fs';
 import logger from './logger';
-import config from '../etc/config';
+import config from '../../config/config';
 import { NotFoundError } from './errorHandler';
 
 const readFile = promisify(fs.readFile);
@@ -37,7 +37,7 @@ class EmailSender {
 
     async _getTemplate(templateName, sendData) {
         try {
-            const bodyTemplate = await readFile(path.join(__dirname, '../templates', templateName, 'body.html'));
+            const bodyTemplate = await readFile(path.join(__dirname, '../emails', templateName, 'body.html'));
             const subject = {
                 REGISTER: 'CheckersApp Registration email',
                 RESET_PASSWORD: 'Reset password for CheckersApp'

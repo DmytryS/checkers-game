@@ -1,7 +1,7 @@
 
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
-import config from '../../etc/config';
+import config from '../../config/config';
 
 const Schema = mongoose.Schema;
 const userSchema = new Schema({

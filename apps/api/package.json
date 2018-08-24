@@ -3,9 +3,11 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node ./app.js",
+    "start": "node ./src/app.js",
     "nodemon": "nodemon --exec node app.js",
-    "test": "mocha --recursive tests --compilers js:babel-register"
+    "test:coverage": "mocha --recursive test --compilers js:babel-register",
+    "test:coverage-check": "mocha --recursive test --compilers js:babel-register",
+    "lint": "eslint ."
   },
   "dependencies": {
     "babel-preset-env": "^1.7.0",

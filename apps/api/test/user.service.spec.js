@@ -1,10 +1,10 @@
 import sinon from 'sinon';
 import should from 'should'; // eslint-disable-line
-import App from '../lib/service';
-import mailSender from '../lib/mailSender';
+import App from '../src/lib/service';
+import mailSender from '../src/lib/mailSender';
 import request from 'supertest-promised';
-import User from '../lib/models/User';
-import Action from '../lib/models/Action';
+import User from '../src/models/User';
+import Action from '../src/models/Action';
 
 const configuration = {
     baseUrl: '/api/v1',

@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 import Express from 'express';
-import config from '../etc/config';
-import routes from './routes';
+import config from '../../config/config';
+import routes from '../routes';
 import logger from './logger';
 import passport from './passport';
 
@@ -20,7 +20,8 @@ export default class Service {
         express.use(Express.json());
         express.use(Express.urlencoded({ extended: false }));
         express.use(cookieParser());
-        express.use(this._config.baseUrl, routes.api);
+        express.use(this._config.baseUrl, routes.game);
+        express.use(this._config.baseUrl, routes.user);
         express.use(this._onError.bind(this));
         express.use(passport.initialize());
 

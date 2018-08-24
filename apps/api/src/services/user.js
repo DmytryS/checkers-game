@@ -1,14 +1,14 @@
 import moment from 'moment';
 import jwt from 'jsonwebtoken';
-import logger from '../logger';
-import passport from '../passport';
-import validator from '../validator';
-import config from '../../etc/config';
+import logger from '../lib/logger';
+import passport from '../lib/passport';
+import validator from '../lib/validator';
+import config from '../../config/config';
 import User from '../models/User';
 import Action from '../models/Action';
-import { ValidationError, NotFoundError } from '../errorHandler';
-import mailSender from '../mailSender';
-import { dumpUser } from './utils';
+import { ValidationError, NotFoundError } from '../lib/errorHandler';
+import mailSender from '../lib/mailSender';
+import { dumpUser } from '../lib/utils';
 
 export default class UserService {
     constructor() {

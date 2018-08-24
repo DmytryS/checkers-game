@@ -1,6 +1,7 @@
 .vscode
 .idea
-/logs/*
+
 node_modules
 package-lock.json
-/etc/*.json
+/apps/api/logs/*
+/apps/api/config/*.json
