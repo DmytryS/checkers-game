@@ -9,7 +9,7 @@ export default (config) => {
             },
             file: {
                 type: 'file',
-                filename: path.join(process.cwd(), config.logger.path, config.logger.filename)
+                filename: path.join(__dirname, config.logger.path, config.logger.filename)
             }
         },
         categories: {

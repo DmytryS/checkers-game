@@ -39,6 +39,11 @@ export default class Service {
         process.on('unhandledRejection', (err) => {
             this._logger.error('Unhandled rejection', err);
         });
+        process.on('SIGTERM', async () => {
+            this._logger.info('Received SIGTERM, going to shutdown server.');
+            await this.stop();
+            this._logger.info('Exited... Buy :)');
+        });
     }
 
     async stop() {
@@ -51,7 +56,7 @@ export default class Service {
         return this._app;
     }
 
-    _onError(err, req, res, next) {
+    _onError(err, req, res) {
         switch (err.code) {
             case 'EACCES':
                 this._logger.error(`${this._config.port} requires elevated privileges`);
@@ -65,7 +70,7 @@ export default class Service {
                 this._logger.error('Request error ', err);
                 res.status(err.status || 500);
 
-                res.send({
+                res.json({
                     error: err.name,
                     message: err.message,
                     details: err.details

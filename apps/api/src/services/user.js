@@ -188,7 +188,9 @@ export default class UserService {
 
     _getGamesHistory(req, res, next) {
         try {
+            const userGames = History.findAll();
 
+            res.json(userGames);
         } catch (err) {
             next(err);
         }

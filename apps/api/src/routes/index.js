@@ -4,4 +4,4 @@ import game from './game';
 export default {
     user,
     game
-}
+};

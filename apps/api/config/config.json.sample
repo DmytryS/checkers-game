@@ -6,7 +6,7 @@
     },
     "logger": {
         "path": "logs",
-        "filename": "checkers-game.log"
+        "filename": "checkers-be.log"
     },
     "baseUrl": "/api/v1/",
     "mail": {

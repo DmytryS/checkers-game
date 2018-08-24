@@ -1,11 +1,15 @@
 import nodemailer from 'nodemailer';
-import Handlebars from 'handlebars';
+import handlebars from 'handlebars';
+import layouts from 'handlebars-layouts';
 import { promisify, promisifyAll } from 'bluebird';
 import path from 'path';
 import fs from 'fs';
 import logger from './logger';
 import config from '../../config/config';
 import { NotFoundError } from './errorHandler';
+
+handlebars.registerHelper(layouts(handlebars));
+handlebars.registerPartial('layout', fs.readFileSync(path.join(__dirname, '/../emails', 'layout.hbs'), 'utf8'));
 
 const readFile = promisify(fs.readFile);
 
@@ -37,15 +41,12 @@ class EmailSender {
 
     async _getTemplate(templateName, sendData) {
         try {
-            const bodyTemplate = await readFile(path.join(__dirname, '../emails', templateName, 'body.html'));
-            const subject = {
-                REGISTER: 'CheckersApp Registration email',
-                RESET_PASSWORD: 'Reset password for CheckersApp'
-            };
+            const bodyTemplate = await readFile(path.join(__dirname, '/../emails', templateName, 'html.hbs'));
+            const subjectTemplate = await readFile(path.join(__dirname, '/../emails', templateName, 'subject.hbs'));
 
             return {
-                body: Handlebars.compile(bodyTemplate.toString())({ ...sendData }),
-                subject
+                body: handlebars.compile(bodyTemplate.toString())({ ...sendData }),
+                subject: handlebars.compile(subjectTemplate.toString())({ ...sendData })
             };
         } catch (err) {
             throw new NotFoundError('Template not found.');
