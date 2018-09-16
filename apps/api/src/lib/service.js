@@ -8,7 +8,7 @@ import passport from './passport';
 
 export default class Service {
     constructor(configForTests) {
-        this._config = configForTests || config;
+        this._config = configForTests || config;        
         this._logger = logger(this._config).getLogger('Main Service');
         this._db = null;
         this._app = null;
@@ -56,7 +56,7 @@ export default class Service {
         return this._app;
     }
 
-    _onError(err, req, res) {
+    _onError(err, req, res, next) {
         switch (err.code) {
             case 'EACCES':
                 this._logger.error(`${this._config.port} requires elevated privileges`);

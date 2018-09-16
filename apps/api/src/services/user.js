@@ -6,47 +6,84 @@ import validator from '../lib/validator';
 import config from '../../config/config';
 import User from '../models/User';
 import Action from '../models/Action';
+import Game from '../models/Game';
 import { ValidationError, NotFoundError } from '../lib/errorHandler';
 import mailSender from '../lib/mailSender';
-import { dumpUser } from '../lib/utils';
+import { dumpUser, dumpGame } from '../lib/utils';
 
 export default class UserService {
     constructor() {
         this._logger = logger(config).getLogger('UserService');
     }
 
+    /**
+     * Returns endpoint which returns jwt token
+     * @returns {Function(req, res, next)} endpoint which returns jwt token
+     */
     get sessionCreate() {
         return this._sessionCreate.bind(this);
     }
 
+    /**
+     * Returns endpoint which returns prolonged jwt token
+     * @returns {Function(req, res, next)} endpoint which returns prolonged jwt token
+     */
     get sessionRenew() {
         return this._sessionRenew.bind(this);
     }
 
+    /**
+     * Returns endpoint which checks jwt token
+     * @returns {Function(req, res, next)} endpoint which checks jwt token
+     */
     get sessionCheck() {
         return this._sessionCheck.bind(this);
     }
 
+    /**
+     * Returns endpoint which creates new user
+     * @returns {Function(req, res, next)} endpoint which creates new user
+     */
     get registerUser() {
         return this._registerUser.bind(this);
     }
 
+    /**
+     * Returns endpoint which confirms user activation or password reset
+     * @returns {Function(req, res, next)} endpoint which confirms user activation or password reset
+     */
     get runAction() {
         return this._runAction.bind(this);
     }
 
+    /**
+     * Returns endpoint which resets user password
+     * @returns {Function(req, res, next)} endpoint which resets user password
+     */
     get resetUserPassword() {
         return this._resetUserPassword.bind(this);
     }
 
+    /**
+     * Returns endpoint which returns user
+     * @returns {Function(req, res, next)} endpoint which returns user
+     */
     get getUserInfo() {
         return this._getUserInfo.bind(this);
     }
 
+    /**
+     * Returns endpoint which updates user
+     * @returns {Function(req, res, next)} endpoint which updates user
+     */
     get updateUserInfo() {
         return this._updateUserInfo.bind(this);
     }
 
+    /**
+     * Returns endpoint which returns user game history
+     * @returns {Function(req, res, next)} endpoint which returns user game history
+     */
     get getGamesHistory() {
         return this._getGamesHistory.bind(this);
     }
@@ -54,8 +91,10 @@ export default class UserService {
     async _sessionCreate(req, res, next) {
         try {
             this._validateUserCredentials(req, next);
-
-            passport.authenticateCredentials(req, res, next);
+            
+            const token = await passport.authenticateCredentials(req);
+            
+            res.json(token);
         } catch (err) {
             next(err);
         }
@@ -63,6 +102,7 @@ export default class UserService {
 
     async _sessionRenew(req, res, next) {
         try {
+            console.log('RENEW');
             const expiresIn = moment().add(1, 'day');
             const token = jwt.sign(
                 this.context,
@@ -71,7 +111,7 @@ export default class UserService {
                     expiresIn: '1d'
                 }
             );
-
+            
             res.json({ token, expiresIn });
         } catch (err) {
             next(err);
@@ -80,7 +120,12 @@ export default class UserService {
 
     async _sessionCheck(req, res, next) {
         try {
-            await passport.authenticateJwt.call(this, req, res, next);
+            console.log('CHECK');
+            await passport.authenticateJwt(req);
+
+
+            
+            next();
         } catch (err) {
             next(err);
         }
@@ -104,9 +149,17 @@ export default class UserService {
                 type: 'REGISTER'
             }).save();
 
-            await mailSender.send({ email: user.email, templateName: 'REGISTER', sendData: { actionId: action.id, name: user.name } });
+            await mailSender.send({
+                email: user.email,
+                templateName: 'REGISTER',
+                sendData: {
+                    actionId: action.id,
+                    name: user.name,
+                    uiUrl: config.uiUrl
+                }
+            });
 
-            res.status(200).json({ id: user.id });
+            res.sendStatus(200);
         } catch (err) {
             next(err);
         }
@@ -133,10 +186,12 @@ export default class UserService {
     }
 
     async _resetUserPassword(req, res, next) {
+        let user;
+
         try {
             this._validateEmail(req, next);
 
-            const user = await User.findOne({ email: req.body.email });
+            user = await User.findOne({ email: req.body.email });
 
             if (!user) {
                 throw new NotFoundError(`User with email of ${req.body.email} not found`);
@@ -147,10 +202,21 @@ export default class UserService {
                 type: 'RESET_PASSWORD'
             });
 
-            await mailSender.send({ email: user.email, templateName: 'RESET_PASSWORD', sendData: { actionId: action.id, name: user.name } });
+            await mailSender.send({
+                email: user.email,
+                templateName: 'RESET_PASSWORD',
+                sendData: {
+                    actionId: action.id,
+                    name: user.name,
+                    uiUrl: config.uiUrl
+                }
+            });
 
             res.sendStatus(200);
         } catch (err) {
+            if (user) {
+                await user.remove();
+            }
             next(err);
         }
     }
@@ -186,11 +252,12 @@ export default class UserService {
         }
     }
 
-    _getGamesHistory(req, res, next) {
+    async _getGamesHistory(req, res, next) {
         try {
-            const userGames = History.findAll();
+            this._validateFilterParams(req, next);
+            const userGames = await Game.findAndFilter(req.query);
 
-            res.json(userGames);
+            res.json(userGames.map(dumpGame));
         } catch (err) {
             next(err);
         }
@@ -207,6 +274,7 @@ export default class UserService {
 
     async _checkifActionExists(actionId) {
         const action = await Action.findById(actionId);
+        console.log(action);
         
         if (!action) {
             throw new NotFoundError(`Action with specified id of ${actionId} not found`);
@@ -253,5 +321,13 @@ export default class UserService {
             .withRequired('password', validator.isString());
 
         validator.validate(validationRules, req.body, next);
+    }
+
+    _validateFilterParams(req, next) {
+        const validationRules = validator.isObject()
+            .withOptional('offset', validator.isInteger({ allowString: true, min: 0 }))
+            .withOptional('limit', validator.isInteger({ allowString: true, min: 1 }));
+
+        validator.validate(validationRules, req.query, next);
     }
 }

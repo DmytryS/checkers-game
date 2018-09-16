@@ -15,27 +15,27 @@ passport.use(
             passwordField: 'password',
             session: false
         },
-        async (email, password, next) => {
+        async (email, password, done) => {
             const user = await User.findOne({ email });
 
             if (!user) {
-                next(`User with email of '${email} not found'`, null);
+                done('Wrong email or password', false);
+            }
+            
+            if (!(await user.isValidPassword(password))) {
+                done('Wrong email or password', false);
             }
 
-            if (await user.isValidPassword(password)) {
-                const expiresIn = moment().add(1, 'day');
-                const token = jwt.sign(
-                    dumpUser(user),
-                    config.secretKey,
-                    {
-                        expiresIn: '1d'
-                    }
-                );
+            const expiresIn = moment().add(1, 'day');
+            const token = jwt.sign(
+                dumpUser(user),
+                config.secretKey,
+                {
+                    expiresIn: '1d'
+                }
+            );
 
-                next(null, { token, expiresIn });
-            } else {
-                next('Wrong email or password', null);
-            }
+            done(false, { token, expiresIn });
         }
     )
 );
@@ -47,38 +47,43 @@ passport.use(
             secretOrKey: config.secretKey,
             session: false
         },
-        async (token, next) => {
-            if (!token || !token.id) {
-                next('Wrong token', null);
+        async (tokenObject, done) => {
+            if (!tokenObject || !tokenObject.id) {
+                done('Wrong token', false);
             }
-            const user = await User.findById(token.id);
 
-            if (user) {
-                next(null, user);
-            } else {
-                next('Wrong token', null);
+            const user = await User.findById(tokenObject.id);
+
+            if (!user) {
+                done('Wrong token', false);
             }
+
+            done(false, dumpUser(user));
         }
     )
 );
 
 module.exports = {
     initialize: () => passport.initialize(),
-    authenticateJwt: async function (req, res, next) {
-        (passport.authenticate('jwt', { session: false }, (arg1, user, err, arg4) => { // eslint-disable-line
-            if(err) {
-                next(new UnauthorizedError(err.message ? err.message : err));
-            } else {
-                this.context = dumpUser(user);
-                next();
-            }
-        }))(req, res, next);
+    authenticateJwt: function (req) {
+        return new Promise((resolve, reject) =>
+            passport.authenticate('jwt', { session: false }, (err, user) => { // eslint-disable-line
+                if(err) {
+                    reject(new UnauthorizedError(err.message ? err.message : err));
+                }
+
+                this.context = user;
+                resolve();
+            })(req)
+        );
     },
-    authenticateCredentials: async (req, res, next) => passport.authenticate('local', { session: false }, (err, token) => {
-        if(err) {
-            next(new UnauthorizedError(err));
-        } else {
-            res.json(token);
-        }
-    })(req, res, next)
+    authenticateCredentials: (req) => new Promise((resolve, reject) =>
+        passport.authenticate('local', { session: false }, (err, token) => {
+            if(err) {
+                reject(new UnauthorizedError(err));
+            }
+            
+            return resolve(token);
+        })(req)
+    )
 };

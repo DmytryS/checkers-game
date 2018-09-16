@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node ./src/app.js",
-    "nodemon": "nodemon --exec node app.js",
+    "nodemon": "nodemon --exec node ./src/app.js",
+    "test": "mocha --recursive test --compilers js:babel-register",
     "test:coverage": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test/*.js -- --require babel-register",
     "test:coverage-check": "npm run test:coverage && istanbul check-coverage",
     "lint": "eslint ."
@@ -22,7 +23,7 @@
     "jsonwebtoken": "^8.3.0",
     "log4js": "^3.0.5",
     "moment": "^2.22.2",
-    "mongoose": "^5.2.9",
+    "mongoose": "^5.2.15",
     "node-validator": "^0.1.27",
     "nodemailer": "^4.6.7",
     "passport": "^0.4.0",

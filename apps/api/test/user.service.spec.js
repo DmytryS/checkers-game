@@ -38,7 +38,7 @@ describe('UserService', () => {
     });
     
     describe('RegisterUser', () => {
-        it('should register new user', async () => {
+        it('Should register new user', async () => {
             const emailStub = sandbox.stub(mailSender, 'send').returns(Promise.resolve());
             const response = await request(server)
                 .post('/api/v1/user/register')
@@ -49,11 +49,21 @@ describe('UserService', () => {
                 .end()
                 .get('body');
     
-            sinon.assert.calledWith(emailStub, { email: 'some@email.com', templateName: 'REGISTER', sendData: { actionId: sinon.match.string, name: 'userName' } });
-            response.should.have.property('id');
+            sinon.assert.calledWith(
+                emailStub,
+                {
+                    email: 'some@email.com',
+                    templateName: 'REGISTER',
+                    sendData: {
+                        actionId: sinon.match.string,
+                        name: 'userName',
+                        uiUrl: 'http://localhost'
+                    }
+                }
+            );
         });
 
-        it('should return 400 if user with provided email alredy exists', async () => {
+        it('Should return 400 if user with provided email alredy exists', async () => {
             const emailStub = sandbox.stub(mailSender, 'send').returns(Promise.resolve());
             
             await new User({ email: 'existing@mail.com', name: 'Petro' }).save();
@@ -74,7 +84,7 @@ describe('UserService', () => {
             emailStub.notCalled.should.be.true();
         });
 
-        it('should return 400 if user with provided name alredy exists', async () => {
+        it('Should return 400 if user with provided name alredy exists', async () => {
             const emailStub = sandbox.stub(mailSender, 'send').returns(Promise.resolve());
             
             await new User({ email: 'existing@mail.com', name: 'Petro' }).save();
@@ -97,8 +107,8 @@ describe('UserService', () => {
     });
 
     describe('ActivateUser', () => {
-        it('should return 200 if user activated', async () => {
-            const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
+        it('Should return 200 if user activated', async () => {
+            const user = await new User({ email: 'someqwe@mail.com', name: 'Dmytry' }).save();
             const action = await new Action({ userId: user.id, type: 'REGISTER' }).save();
 
             await request(server)
@@ -122,7 +132,7 @@ describe('UserService', () => {
     });
 
     describe('RestoreUserPassword', () => {
-        it('should return 200 if reset password email sent', async () => {
+        it('Should return 200 if reset password email sent', async () => {
             const emailStub = sandbox.stub(mailSender, 'send').returns(Promise.resolve());
 
             await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
@@ -135,10 +145,21 @@ describe('UserService', () => {
                 .expect(200)
                 .end();
 
-            sinon.assert.calledWith(emailStub, { email: 'some@mail.com', templateName: 'RESET_PASSWORD', sendData: { actionId: sinon.match.string, name: 'Dmytry' } });
+            sinon.assert.calledWith(
+                emailStub,
+                {
+                    email: 'some@mail.com',
+                    templateName: 'RESET_PASSWORD',
+                    sendData: {
+                        actionId: sinon.match.string,
+                        name: 'Dmytry',
+                        uiUrl: 'http://localhost'
+                    }
+                }
+            );
         });
         
-        it('should return 404 if user not found', async () => {
+        it('Should return 404 if user not found', async () => {
             await request(server)
                 .post('/api/v1/user/resetPassword')
                 .set('Accept', 'application/json')
@@ -154,10 +175,9 @@ describe('UserService', () => {
             const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
 
             await user.setPassword('password');
-            await user.save();
 
             const result = await request(server)
-                .post('/api/v1/user/sessions/create')
+                .post('/api/v1/user/session/create')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send({ email: 'some@mail.com', password: 'password' })
@@ -176,7 +196,7 @@ describe('UserService', () => {
 
         it('should return 401 if failed to create session', async () => {
             await request(server)
-                .post('/api/v1/user/sessions/create')
+                .post('/api/v1/user/session/create')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send({ email: 'some123@mail.com', password: 'password123' })
@@ -192,7 +212,7 @@ describe('UserService', () => {
             await user.setPassword('somePass');
             
             const resultWithOldToken = await request(server)
-                .post('/api/v1/user/sessions/create')
+                .post('/api/v1/user/session/create')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send({ email: 'some@mail.com', password: 'somePass' })
@@ -201,7 +221,7 @@ describe('UserService', () => {
                 .get('body');
 
             const result = await request(server)
-                .post('/api/v1/user/sessions/renew')
+                .post('/api/v1/user/session/renew')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .set('Authorization', resultWithOldToken.token)
@@ -225,7 +245,7 @@ describe('UserService', () => {
 
         await user.setPassword('somePass');
         const { token } = await request(server)
-            .post('/api/v1/user/sessions/create')
+            .post('/api/v1/user/session/create')
             .set('Accept', 'application/json')
             .set('Content-Type', 'application/json')
             .send({ email: 'some@mail.com', password: 'somePass' })
@@ -254,7 +274,7 @@ describe('UserService', () => {
 
         await user.setPassword('somePass');
         const { token } = await request(server)
-            .post('/api/v1/user/sessions/create')
+            .post('/api/v1/user/session/create')
             .set('Accept', 'application/json')
             .set('Content-Type', 'application/json')
             .send({ email: 'some@mail.com', password: 'somePass' })
