@@ -1,4 +1,4 @@
-#Base image with formula-converter-api source only
+#Base image
 FROM node:8-alpine AS base
 WORKDIR /usr/src/app
 COPY src src

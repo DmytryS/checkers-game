@@ -1,20 +1,38 @@
-import config from '../../config/config';
-import logger from '../lib/logger';
+import log4js from 'log4js';
 
-
+/**
+ * Game service
+ */
 export default class GameService {
+
+    /**
+     * Constructs game service
+     * @returns {GameService} game service
+     */
     constructor() {
-        this._logger = logger(config).getLogger('GameService');
+        this._logger = log4js.getLogger('GameService');
     }
 
+    /**
+     * Returns endpoint which creates new game
+     * @returns {Function(req, res, next)} endpoint which creates new game
+     */
     get createGame() {
         return this._createGame.bind(this);
     }
 
+    /**
+     * Returns endpoint which returns list of games
+     * @returns {Function(req, res, next)} endpoint which returns list of nodes
+     */
     get findGame() {
         return this._findGame.bind(this);
     }
 
+    /**
+     * Returns endpoint which returns list of played games
+     * @returns {Function(req, res, next)} endpoint returns list of played games
+     */
     get getGamesHistory() {
         return this._getGamesHistory.bind(this);
     }

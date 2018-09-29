@@ -15,6 +15,18 @@ const configuration = {
         path: 'logs',
         filename: 'checkers-be-test.log'
     },
+    mail: {
+        from: 'user@gmail.com',
+        /* eslint-disable-next-line*/
+        transport_options: {
+            host: 'smpt.gmail.com',
+            service: 'Gmail',
+            auth: {
+                user: 'mail@gmail.com',
+                pass: 'password'
+            }
+        }
+    },
     port: 3000
 };
 const app = new App(configuration);
@@ -23,7 +35,7 @@ let sandbox;
 
 describe('UserService', () => {
     before(async () => {
-        app.start();
+        await app.start();
         server = app.server;
         sandbox = sinon.createSandbox();
     });
@@ -38,27 +50,25 @@ describe('UserService', () => {
     });
     
     describe('RegisterUser', () => {
-        it('Should register new user', async () => {
+        it('Should return 200 if registered new user', async () => {
             const emailStub = sandbox.stub(mailSender, 'send').returns(Promise.resolve());
-            const response = await request(server)
+            
+            await request(server)
                 .post('/api/v1/user/register')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send({ email: 'some@email.com', name: 'userName' })
                 .expect(200)
-                .end()
-                .get('body');
+                .end();
     
             sinon.assert.calledWith(
                 emailStub,
+                'some@email.com',
+                'REGISTER',
                 {
-                    email: 'some@email.com',
-                    templateName: 'REGISTER',
-                    sendData: {
-                        actionId: sinon.match.string,
-                        name: 'userName',
-                        uiUrl: 'http://localhost'
-                    }
+                    actionId: sinon.match.string,
+                    name: 'userName',
+                    uiUrl: 'http://localhost'
                 }
             );
         });
@@ -108,11 +118,11 @@ describe('UserService', () => {
 
     describe('ActivateUser', () => {
         it('Should return 200 if user activated', async () => {
-            const user = await new User({ email: 'someqwe@mail.com', name: 'Dmytry' }).save();
-            const action = await new Action({ userId: user.id, type: 'REGISTER' }).save();
+            const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
+            const action = await Action.create({ userId: user.id, type: 'REGISTER' });
 
             await request(server)
-                .post(`/api/v1/action/${action.id}`)
+                .post(`/api/v1/actions/${action.id}`)
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send({ password: 'SomePassword123' })
@@ -122,7 +132,7 @@ describe('UserService', () => {
         
         it('should return 404 if action not exists', async () => {
             await request(server)
-                .post('/api/v1/action/aaaaaaaaaaaaaaaaaaaaaaaa')
+                .post('/api/v1/actions/aaaaaaaaaaaaaaaaaaaaaaaa')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send({ password: 'SomePassword123' })
@@ -147,14 +157,12 @@ describe('UserService', () => {
 
             sinon.assert.calledWith(
                 emailStub,
+                'some@mail.com',
+                'RESET_PASSWORD',
                 {
-                    email: 'some@mail.com',
-                    templateName: 'RESET_PASSWORD',
-                    sendData: {
-                        actionId: sinon.match.string,
-                        name: 'Dmytry',
-                        uiUrl: 'http://localhost'
-                    }
+                    actionId: sinon.match.string,
+                    name: 'Dmytry',
+                    uiUrl: 'http://localhost'
                 }
             );
         });
@@ -211,7 +219,7 @@ describe('UserService', () => {
 
             await user.setPassword('somePass');
             
-            const resultWithOldToken = await request(server)
+            const { token } = await request(server)
                 .post('/api/v1/user/session/create')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
@@ -224,7 +232,7 @@ describe('UserService', () => {
                 .post('/api/v1/user/session/renew')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
-                .set('Authorization', resultWithOldToken.token)
+                .set('Authorization', token)
                 .send()
                 .expect(200)
                 .end()

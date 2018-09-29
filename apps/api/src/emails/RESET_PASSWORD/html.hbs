@@ -2,13 +2,16 @@
 
   {{#content "main"}}
     <p>
-      <strong>{{t "Hi there,"}}</strong>
+      <strong>Hi there, {{fistName}}</strong>
     </p>
     <p>
-      {{t "Thank you for signing up. If you have any questions please don't hesitate to contact our support team at"}}
+      <a href="{{uiUrl}}/actions/{{actionId}}">RESET PASSWORD</a>.</p>
+    </p>
+    <p>
+      Thank you for signing up. If you have any questions please don't hesitate to contact our support team at
       <a href="mailto:hello@examle.com">hello@example.com</a>.</p>
     <p>
-      <strong>{{t "Best regards,"}}</strong><br>
+      <strong>Best regards</strong><br>
       Company Name
     </p>
   {{/content}}

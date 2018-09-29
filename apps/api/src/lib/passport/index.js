@@ -3,10 +3,10 @@ import moment from 'moment';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import jwt from 'jsonwebtoken';
-import User from '../models/User';
-import { UnauthorizedError } from './errorHandler';
-import config from '../../config/config';
-import { dumpUser } from './utils';
+import { User } from '../../models';
+import { UnauthorizedError } from '../errorHandler';
+import config from '../../../config/config';
+import { dumpUser } from '../utils';
 
 passport.use(
     new LocalStrategy(
@@ -22,7 +22,7 @@ passport.use(
                 done('Wrong email or password', false);
             }
             
-            if (!(await user.isValidPassword(password))) {
+            if (!await user.isValidPassword(password)) {
                 done('Wrong email or password', false);
             }
 

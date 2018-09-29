@@ -1,19 +1,25 @@
 import moment from 'moment';
 import jwt from 'jsonwebtoken';
-import logger from '../lib/logger';
+import log4js from 'log4js';
 import passport from '../lib/passport';
-import validator from '../lib/validator';
+import validation from '../lib/validation';
 import config from '../../config/config';
-import User from '../models/User';
-import Action from '../models/Action';
-import Game from '../models/Game';
+import { User, Action, Game } from '../models';
 import { ValidationError, NotFoundError } from '../lib/errorHandler';
 import mailSender from '../lib/mailSender';
 import { dumpUser, dumpGame } from '../lib/utils';
 
+/**
+ * Uesr service
+ */
 export default class UserService {
+
+    /**
+     * Constructs user service
+     * @returns {UserService} user service
+     */
     constructor() {
-        this._logger = logger(config).getLogger('UserService');
+        this._logger = log4js.getLogger('UserService');
     }
 
     /**
@@ -102,7 +108,6 @@ export default class UserService {
 
     async _sessionRenew(req, res, next) {
         try {
-            console.log('RENEW');
             const expiresIn = moment().add(1, 'day');
             const token = jwt.sign(
                 this.context,
@@ -120,11 +125,7 @@ export default class UserService {
 
     async _sessionCheck(req, res, next) {
         try {
-            console.log('CHECK');
-            await passport.authenticateJwt(req);
-
-
-            
+            await passport.authenticateJwt.bind(this, req);
             next();
         } catch (err) {
             next(err);
@@ -149,15 +150,15 @@ export default class UserService {
                 type: 'REGISTER'
             }).save();
 
-            await mailSender.send({
-                email: user.email,
-                templateName: 'REGISTER',
-                sendData: {
+            await mailSender.send(
+                user.email,
+                'REGISTER',
+                {
                     actionId: action.id,
                     name: user.name,
                     uiUrl: config.uiUrl
                 }
-            });
+            );
 
             res.sendStatus(200);
         } catch (err) {
@@ -168,7 +169,6 @@ export default class UserService {
     async _runAction(req, res, next) {
         try {
             const actionId = req.params.actionId;
-            
             const action = await this._checkifActionExists(actionId);
 
             this._validateUserPassword(req, next);
@@ -176,7 +176,6 @@ export default class UserService {
             const user = await User.findById(action.userId);
             
             await user.setPassword(req.body.password);
-
             await action.remove();
 
             res.sendStatus(200);
@@ -202,15 +201,16 @@ export default class UserService {
                 type: 'RESET_PASSWORD'
             });
 
-            await mailSender.send({
-                email: user.email,
-                templateName: 'RESET_PASSWORD',
-                sendData: {
+            await mailSender.send(
+                user.email,
+                'RESET_PASSWORD',
+                {
                     actionId: action.id,
                     name: user.name,
                     uiUrl: config.uiUrl
                 }
-            });
+            );
+            
 
             res.sendStatus(200);
         } catch (err) {
@@ -274,7 +274,6 @@ export default class UserService {
 
     async _checkifActionExists(actionId) {
         const action = await Action.findById(actionId);
-        console.log(action);
         
         if (!action) {
             throw new NotFoundError(`Action with specified id of ${actionId} not found`);
@@ -283,18 +282,20 @@ export default class UserService {
     }
 
     _validateUser(req, next) {
+        const validator = validation.validator;
         const validationRules = validator.isObject()
             .withRequired('email', validator.isString({ regex: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/ }))
             .withRequired('name', validator.isString());
 
-        validator.validate(validationRules, req.body, next);
+        validation.validate(validationRules, req.body, next);
     }
 
     _validateEmail(req, next) {
+        const validator = validation.validator;
         const validationRules = validator.isObject()
             .withRequired('email', validator.isString({ regex: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/ }));
 
-        validator.validate(validationRules, req.body, next);
+        validation.validate(validationRules, req.body, next);
     }
 
     _validateUserPassword(req, next) {
@@ -308,26 +309,29 @@ export default class UserService {
             }
         };
 
+        const validator = validation.validator;
         const validationRules = validator.isObject()
             .withCustom(validatepasswordLength.bind(this))
             .withRequired('password', validator.isString());
 
-        validator.validate(validationRules, req.body, next);
+        validation.validate(validationRules, req.body, next);
     }
 
     _validateUserCredentials(req, next) {
+        const validator = validation.validator;
         const validationRules = validator.isObject()
             .withRequired('email', validator.isString({ regex: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/ }))
             .withRequired('password', validator.isString());
 
-        validator.validate(validationRules, req.body, next);
+        validation.validate(validationRules, req.body, next);
     }
 
     _validateFilterParams(req, next) {
+        const validator = validation.validator;
         const validationRules = validator.isObject()
             .withOptional('offset', validator.isInteger({ allowString: true, min: 0 }))
             .withOptional('limit', validator.isInteger({ allowString: true, min: 1 }));
 
-        validator.validate(validationRules, req.query, next);
+        validation.validate(validationRules, req.query, next);
     }
 }
