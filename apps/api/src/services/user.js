@@ -4,10 +4,10 @@ import log4js from 'log4js';
 import passport from '../lib/passport';
 import validation from '../lib/validation';
 import config from '../../config/config';
-import { User, Action, Game } from '../models';
+import { User, Action } from '../models';
 import { ValidationError, NotFoundError } from '../lib/errorHandler';
 import mailSender from '../lib/mailSender';
-import { dumpUser, dumpGame } from '../lib/utils';
+import { dumpUser, dumpAction } from '../lib/utils';
 
 /**
  * Uesr service
@@ -55,6 +55,14 @@ export default class UserService {
     }
 
     /**
+     * Returns endpoint which return action
+     * @returns {Function(req, res, next)} endpoint which returns action
+     */
+    get getAction() {
+        return this._getAction.bind(this);
+    }
+
+    /**
      * Returns endpoint which confirms user activation or password reset
      * @returns {Function(req, res, next)} endpoint which confirms user activation or password reset
      */
@@ -86,21 +94,22 @@ export default class UserService {
         return this._updateUserInfo.bind(this);
     }
 
-    /**
-     * Returns endpoint which returns user game history
-     * @returns {Function(req, res, next)} endpoint which returns user game history
-     */
-    get getGamesHistory() {
-        return this._getGamesHistory.bind(this);
-    }
-
     async _sessionCreate(req, res, next) {
         try {
             this._validateUserCredentials(req, next);
             
-            const token = await passport.authenticateCredentials(req);
+            const user = await passport.authenticateCredentials(req);
+
+            const expiresIn = moment().add(1, 'day');
+            const token = jwt.sign(
+                dumpUser(user),
+                config.secretKey,
+                {
+                    expiresIn: '1d'
+                }
+            );
             
-            res.json(token);
+            res.json({ token, expiresIn });
         } catch (err) {
             next(err);
         }
@@ -125,7 +134,8 @@ export default class UserService {
 
     async _sessionCheck(req, res, next) {
         try {
-            await passport.authenticateJwt.bind(this, req);
+            this.context = await passport.authenticateJwt(req);
+
             next();
         } catch (err) {
             next(err);
@@ -161,6 +171,17 @@ export default class UserService {
             );
 
             res.sendStatus(200);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    async _getAction(req, res, next) {
+        try {
+            const actionId = req.params.actionId;
+            const action = await this._checkifActionExists(actionId);
+
+            res.json(dumpAction(action));
         } catch (err) {
             next(err);
         }
@@ -252,17 +273,6 @@ export default class UserService {
         }
     }
 
-    async _getGamesHistory(req, res, next) {
-        try {
-            this._validateFilterParams(req, next);
-            const userGames = await Game.findAndFilter(req.query);
-
-            res.json(userGames.map(dumpGame));
-        } catch (err) {
-            next(err);
-        }
-    }
-
     async _checkifUserExists(userId) {
         const user = await User.findById(userId);
         
@@ -324,14 +334,5 @@ export default class UserService {
             .withRequired('password', validator.isString());
 
         validation.validate(validationRules, req.body, next);
-    }
-
-    _validateFilterParams(req, next) {
-        const validator = validation.validator;
-        const validationRules = validator.isObject()
-            .withOptional('offset', validator.isInteger({ allowString: true, min: 0 }))
-            .withOptional('limit', validator.isInteger({ allowString: true, min: 1 }));
-
-        validation.validate(validationRules, req.query, next);
     }
 }

@@ -1,4 +1,6 @@
 import log4js from 'log4js';
+import { Game } from '../models';
+import { dumpGame } from '../lib/utils';
 
 /**
  * Game service
@@ -22,11 +24,11 @@ export default class GameService {
     }
 
     /**
-     * Returns endpoint which returns list of games
-     * @returns {Function(req, res, next)} endpoint which returns list of nodes
+     * Returns endpoint which returns list of awaiting games
+     * @returns {Function(req, res, next)} endpoint which returns list of awaiting games
      */
-    get findGame() {
-        return this._findGame.bind(this);
+    get getAwaitingGames() {
+        return this._getAwaitingGames.bind(this);
     }
 
     /**
@@ -45,7 +47,7 @@ export default class GameService {
         }
     }
 
-    async _findGame(req, res, next) {
+    async _getAwaitingGames(req, res, next) {
         try {
 
         } catch (err) {
@@ -55,7 +57,12 @@ export default class GameService {
 
     async _getGamesHistory(req, res, next) {
         try {
+            const userId = this.context.id;
 
+            this._validateFilterParams(req, next);
+            const games = await Game.findGamesWithUser(userId, req.query);
+
+            res.json(games.map(dumpGame));
         } catch (err) {
             next(err);
         }
@@ -68,5 +75,14 @@ export default class GameService {
             throw new NotFoundError(`User with specified id of ${userId} not found`);
         }
         return user;
+    }
+
+    _validateFilterParams(req, next) {
+        const validator = validation.validator;
+        const validationRules = validator.isObject()
+            .withOptional('offset', validator.isInteger({ allowString: true, min: 0 }))
+            .withOptional('limit', validator.isInteger({ allowString: true, min: 1 }));
+
+        validation.validate(validationRules, req.query, next);
     }
 }

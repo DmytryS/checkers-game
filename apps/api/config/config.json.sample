@@ -20,6 +20,10 @@
             }
         }
     },
+    "redis": {
+        "host": "127.0.0.1",
+        "port": "6379"
+    },
     "secretKey": "Sample_Key",
     "saltRounds": 12,
     "minPasswordLength": 6,

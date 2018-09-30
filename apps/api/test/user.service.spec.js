@@ -3,8 +3,7 @@ import should from 'should'; // eslint-disable-line
 import App from '../src/lib/service';
 import mailSender from '../src/lib/mailSender';
 import request from 'supertest-promised';
-import User from '../src/models/User';
-import Action from '../src/models/Action';
+import { User, Action } from '../src/models';
 
 const configuration = {
     baseUrl: '/api/v1',
@@ -178,13 +177,48 @@ describe('UserService', () => {
         });
     });
 
+    describe('Show action', () => {
+        it('Should return 200 if returned action', async () => {
+            const action = await new Action({
+                userId: 'aaaaaaaaaaaaaaaaaaaaaaaa',
+                type: 'REGISTER'
+            }).save();
+
+            const response = await request(server)
+                .get(`/api/v1/actions/${action.id}`)
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .expect(200)
+                .end()
+                .get('body');
+
+            sinon.assert.match(
+                response,
+                {
+                    id: sinon.match.string,
+                    type: 'REGISTER',
+                    userId: 'aaaaaaaaaaaaaaaaaaaaaaaa'
+                });
+        });
+
+        it('Should return 404 if action not found', async () => {
+            await request(server)
+                .get('/api/v1/actions/aaaaaaaaaaaaaaaaaaaaaaaa')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ email: 'other@mail.com' })
+                .expect(404)
+                .end();
+        });
+    });
+
     describe('SessionCreate', () => {
         it('should return 200 if session created', async () => {
             const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
 
             await user.setPassword('password');
 
-            const result = await request(server)
+            const response = await request(server)
                 .post('/api/v1/user/session/create')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
@@ -194,7 +228,7 @@ describe('UserService', () => {
                 .get('body');
 
             sinon.assert.match(
-                result,
+                response,
                 {
                     token: sinon.match.string,
                     expiresIn: sinon.match.string

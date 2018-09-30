@@ -6,17 +6,23 @@ const router = express.Router();
 const userService = new UserService();
 
 // Session
-router.post('/user/session/create', userService.sessionCreate);
-router.post('/user/session/renew', userService.sessionCheck, userService.sessionRenew);
+router.route('/user/session/create')
+    .post(userService.sessionCreate);
+router.route('/user/session/renew')
+    .post(userService.sessionCheck, userService.sessionRenew);
 
 // User
-router.post('/user/register', userService.registerUser);
-router.post('/user/resetPassword', userService.resetUserPassword);
-router.get('/user', userService.sessionCheck, userService.getUserInfo);
-router.post('/user', userService.sessionCheck, userService.updateUserInfo);
-router.get('/user/history', userService.getGamesHistory);
+router.route('/user/register')
+    .post(userService.registerUser);
+router.route('/user/resetPassword')
+    .post(userService.resetUserPassword);
+router.route('/user')
+    .get(userService.sessionCheck, userService.getUserInfo)
+    .post(userService.sessionCheck, userService.updateUserInfo);
 
 // Action
-router.post('/actions/:actionId', userService.runAction);
+router.route('/actions/:actionId')
+    .get(userService.getAction)
+    .post(userService.runAction);
 
 export default router;

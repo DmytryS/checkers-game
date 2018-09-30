@@ -14,11 +14,24 @@ const gameSchema = new Schema({
 }, { timestamps: true });
 
 gameSchema.statics = {
-    findAndFilter: async function (filterParams) {
+    /**
+     * Find all games where user participated
+     * @param {String} userId user id
+     * @param {Object} filterParams object with parameters for finding games
+     * @returns {Promise<Array<Game>>} promise to return with found games
+     */
+    findGamesWithUser: async function (userId, filterParams) {
         return await this
             .aggregate()
             .skip(filterParams.skipRecords || 0)
             .limit(filterParams.limitRecords || 20)
+            .find({
+                $or: [ {
+                    player1: userId
+                }, {
+                    player2: userId
+                } ]
+            })
             .exec();
     }
 };

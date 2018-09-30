@@ -7,7 +7,7 @@ import fs from 'fs';
 import config from '../../config/config';
 import routes from '../routes';
 import passport from './passport';
-import * as errorHandlerModule from './errorHandler';
+import { NotFoundError, errorHandler } from './errorHandler';
 
 /**
  * Main class
@@ -35,9 +35,9 @@ export default class Service {
         express.use(this._config.baseUrl, routes.user);
         express.use(passport.initialize());
         express.use((req, res, next) => {
-            next(new errorHandlerModule.NotFoundError(`Could not find path ${ req.originalUrl }. Not found`, 404));
+            next(new NotFoundError(`Could not find path ${ req.originalUrl }. Not found`, 404));
         });
-        express.use(errorHandlerModule.errorHandler);
+        express.use(errorHandler);
 
         this._db = await this._connectDatabase();
         this._db.on('error', (err) => this._logger.error(`Mongoose connection error: ${err}`));
