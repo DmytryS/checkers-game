@@ -5,9 +5,9 @@
   "scripts": {
     "start": "node ./src/app.js",
     "nodemon": "nodemon --exec node ./src/app.js",
-    "test": "mocha --recursive test --compilers js:babel-register",
-    "test:coverage": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test/*.js -- --require babel-register",
-    "test:coverage-check": "npm run test:coverage && istanbul check-coverage",
+    "test": "NODE_ENV=test mocha --recursive test --compilers js:babel-register",
+    "test:coverage": "NODE_ENV=test ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test/*.js -- --require babel-register",
+    "test:coverage-check": "NODE_ENV=test npm run test:coverage && istanbul check-coverage",
     "lint": "eslint ."
   },
   "dependencies": {

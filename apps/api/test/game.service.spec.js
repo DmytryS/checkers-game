@@ -93,14 +93,18 @@ describe('UserService', () => {
                     player1: user.id,
                     player2: 'aaaaaaaaaaaaaaaaaaaaaaaa',
                     winner: user.id,
-                    status: 'COMPLETED'
+                    status: 'COMPLETED',
+                    createdAt: sinon.match.string,
+                    updatedAt: sinon.match.string
                 }, {
                     id: sinon.match.string,
                     player1: 'aaaaaaaaaaaaaaaaaaaaaaaa',
                     player2: user.id,
-                    winner: null,
-                    status: 'FAILED'
-                } ]);
+                    status: 'FAILED',
+                    createdAt: sinon.match.string,
+                    updatedAt: sinon.match.string
+                } ]
+            );
         });
     });
 });

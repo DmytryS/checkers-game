@@ -8,16 +8,15 @@ passport.use(jwtStrategy);
 
 export default {
     initialize: () => passport.initialize(),
-    authenticateJwt: function (req) {
-        return new Promise((resolve, reject) =>
-            passport.authenticate('jwt', { session: false }, (err, user) => { // eslint-disable-line
-                if(err) {
-                    reject(new UnauthorizedError(err.message ? err.message : err));
-                }
+    authenticateJwt: function (req, res, next) {
+        passport.authenticate('jwt', { session: false }, (err, user) => { // eslint-disable-line
+            if(err || !user) {
+                reject(new UnauthorizedError(err.message ? err.message : err));
+            }
 
-                return resolve(user);
-            })(req)
-        );
+            req.user = user;
+            next();
+        })(req, res, next);
     },
     authenticateCredentials: (req) => new Promise((resolve, reject) =>
         passport.authenticate('local', { session: false }, (err, user) => {

@@ -1,6 +1,8 @@
 import log4js from 'log4js';
+import validation from '../lib/validation';
 import { Game } from '../models';
 import { dumpGame } from '../lib/utils';
+import redisClient from '../lib/redisClient';
 
 /**
  * Game service
@@ -19,16 +21,8 @@ export default class GameService {
      * Returns endpoint which creates new game
      * @returns {Function(req, res, next)} endpoint which creates new game
      */
-    get createGame() {
-        return this._createGame.bind(this);
-    }
-
-    /**
-     * Returns endpoint which returns list of awaiting games
-     * @returns {Function(req, res, next)} endpoint which returns list of awaiting games
-     */
-    get getAwaitingGames() {
-        return this._getAwaitingGames.bind(this);
+    get joinOrCreateGame() {
+        return this._joinOrCreateGame.bind(this);
     }
 
     /**
@@ -39,15 +33,7 @@ export default class GameService {
         return this._getGamesHistory.bind(this);
     }
 
-    async _createGame(req, res, next) {
-        try {
-
-        } catch (err) {
-            next(err);
-        }
-    }
-
-    async _getAwaitingGames(req, res, next) {
+    async _joinOrCreateGame(req, res, next) {
         try {
 
         } catch (err) {
@@ -57,7 +43,7 @@ export default class GameService {
 
     async _getGamesHistory(req, res, next) {
         try {
-            const userId = this.context.id;
+            const userId = req.user.id;
 
             this._validateFilterParams(req, next);
             const games = await Game.findGamesWithUser(userId, req.query);

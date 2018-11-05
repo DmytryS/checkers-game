@@ -2,7 +2,9 @@ export function dumpUser(user) {
     return {
         id: user.id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
     };
 }
 
@@ -12,7 +14,9 @@ export function dumpGame(game) {
         player1: game.player1,
         player2: game.player2,
         winner: game.winner,
-        status: game.status
+        status: game.status,
+        createdAt: game.createdAt,
+        updatedAt: game.updatedAt
     };
 }
 
@@ -20,6 +24,8 @@ export function dumpAction(action) {
     return {
         id: action.id,
         userId: action.userId,
-        type: action.type
+        type: action.type,
+        createdAt: action.createdAt,
+        updatedAt: action.updatedAt
     };
 }

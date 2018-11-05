@@ -39,14 +39,6 @@ export default class UserService {
     }
 
     /**
-     * Returns endpoint which checks jwt token
-     * @returns {Function(req, res, next)} endpoint which checks jwt token
-     */
-    get sessionCheck() {
-        return this._sessionCheck.bind(this);
-    }
-
-    /**
      * Returns endpoint which creates new user
      * @returns {Function(req, res, next)} endpoint which creates new user
      */
@@ -119,7 +111,7 @@ export default class UserService {
         try {
             const expiresIn = moment().add(1, 'day');
             const token = jwt.sign(
-                this.context,
+                req.user,
                 config.secretKey,
                 {
                     expiresIn: '1d'
@@ -127,16 +119,6 @@ export default class UserService {
             );
             
             res.json({ token, expiresIn });
-        } catch (err) {
-            next(err);
-        }
-    }
-
-    async _sessionCheck(req, res, next) {
-        try {
-            this.context = await passport.authenticateJwt(req);
-
-            next();
         } catch (err) {
             next(err);
         }
@@ -244,7 +226,7 @@ export default class UserService {
 
     async _getUserInfo(req, res, next) {
         try {
-            const userId = this.context.id;
+            const userId = req.user.id;
             const user = await this._checkifUserExists(userId);
 
             res.json(dumpUser(user));
@@ -256,7 +238,7 @@ export default class UserService {
     async _updateUserInfo(req, res, next) {
         try {
             const userObject = this._validateUser(req, next);
-            const user = await User.findById(this.context.usserId);
+            const user = await User.findById(req.user.id);
 
             if (user.email !== userObject.email && await User.findOne({ email: userObject.email })) {
                 throw new ValidationError(`User with email of \'${userObject.email}\' already exists`);

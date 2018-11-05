@@ -15,7 +15,7 @@ export default new LocalStrategy(
             done('Wrong email or password', false);
         }
         
-        if (!await user.isValidPassword(password)) {
+        if (!(await user.isValidPassword(password))) {
             done('Wrong email or password', false);
         }
 

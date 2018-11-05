@@ -1,15 +1,17 @@
 import express from 'express';
 import { UserService } from '../services';
+import passport from '../lib/passport';
 
 // eslint-disable-next-line
 const router = express.Router();
 const userService = new UserService();
 
+
 // Session
 router.route('/user/session/create')
     .post(userService.sessionCreate);
 router.route('/user/session/renew')
-    .post(userService.sessionCheck, userService.sessionRenew);
+    .post(passport.authenticateJwt, userService.sessionRenew);
 
 // User
 router.route('/user/register')
@@ -17,8 +19,8 @@ router.route('/user/register')
 router.route('/user/resetPassword')
     .post(userService.resetUserPassword);
 router.route('/user')
-    .get(userService.sessionCheck, userService.getUserInfo)
-    .post(userService.sessionCheck, userService.updateUserInfo);
+    .get(passport.authenticateJwt, userService.getUserInfo)
+    .post(passport.authenticateJwt, userService.updateUserInfo);
 
 // Action
 router.route('/actions/:actionId')

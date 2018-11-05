@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 import Express from 'express';
+import http from 'http';
+import socketIo from 'socket.io';
 import log4js from 'log4js';
 import path from 'path';
 import fs from 'fs';
@@ -43,6 +45,8 @@ export default class Service {
         this._db.on('error', (err) => this._logger.error(`Mongoose connection error: ${err}`));
         this._db.once('open', () => this._logger.info('Succesfully connected to db'));
 
+        const io = socketIo(http.createServer(express));
+
         this._app = express.listen(this._config.port, () => {
             this._logger.info(`App listening on port ${this._config.port}`);
         });
@@ -79,7 +83,13 @@ export default class Service {
     }
 
     async _connectDatabase() {
-        await mongoose.connect(this._config.db.url, { useNewUrlParser: true });
+        await mongoose.connect(
+            this._config.db.url,
+            {
+                useNewUrlParser: true,
+                useCreateIndex: true
+            }
+        );
         return mongoose.connection;
     }
 

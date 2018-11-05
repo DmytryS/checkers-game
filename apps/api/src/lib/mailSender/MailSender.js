@@ -25,9 +25,17 @@ export class EmailSender {
     constructor(configuration) {
         this._config = configuration;
         this._logger = log4js.getLogger('MailSender');
-        this._tranport = promisifyAll(
-            nodemailer.createTransport(this._config.mail.transport_options)
-        );
+
+        if (process.env.NODE_ENV === 'test') {
+            this._tranport = {
+                sendMailAsync: Promise.resolve()
+            };
+        } else {
+            this._tranport = promisifyAll(
+                nodemailer.createTransport(this._config.mail.transport_options)
+            );
+        }
+        
     }
 
     /**

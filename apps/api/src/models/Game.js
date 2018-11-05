@@ -22,9 +22,6 @@ gameSchema.statics = {
      */
     findGamesWithUser: async function (userId, filterParams) {
         return await this
-            .aggregate()
-            .skip(filterParams.skipRecords || 0)
-            .limit(filterParams.limitRecords || 20)
             .find({
                 $or: [ {
                     player1: userId
@@ -32,6 +29,9 @@ gameSchema.statics = {
                     player2: userId
                 } ]
             })
+            .skip(filterParams.skipRecords || 0)
+            .limit(filterParams.limitRecords || 20)
+            .sort('createdAt')
             .exec();
     }
 };

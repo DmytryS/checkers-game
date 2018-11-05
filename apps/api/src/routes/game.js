@@ -1,12 +1,14 @@
 import express from 'express';
-import { GameService, UserService } from '../services';
+import { GameService } from '../services';
+import passport from '../lib/passport';
 
 // eslint-disable-next-line
 const router = express.Router();
 const gameService = new GameService();
-const userService = new UserService();
 
 // History
-router.get('/games', userService.sessionCheck, gameService.getGamesHistory);
+router.route('/games')
+    .get(passport.authenticateJwt, gameService.getGamesHistory)
+    .post(passport.authenticateJwt, gameService.joinOrCreateGame);
 
 export default router;
