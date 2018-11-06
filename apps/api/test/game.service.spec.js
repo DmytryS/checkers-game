@@ -2,6 +2,7 @@ import sinon from 'sinon';
 import should from 'should'; // eslint-disable-line
 import App from '../src/lib/service';
 import request from 'supertest-promised';
+import socketIoClient from 'socket.io-client';
 import { User, Game } from '../src/models';
 
 const configuration = {
@@ -27,14 +28,21 @@ const configuration = {
     },
     port: 3000
 };
+const ioOptions = {
+    transports: [ 'websocket' ],
+    forceNew: true,
+    reconnection: false
+};
 const app = new App(configuration);
 let server;
+let ioClient;
 let sandbox;
 
 describe('GameService', () => {
     before(async () => {
         await app.start();
         server = app.server;
+        ioClient = socketIoClient('http://localhost:3000', ioOptions);
         sandbox = sinon.createSandbox();
     });
   
@@ -192,8 +200,50 @@ describe('GameService', () => {
                     updatedAt: sinon.match.string
                 }
             );
+        });
 
-            
+        it.only('Should start game through socket', async (done) => {
+            const user = await new User({
+                email: 'some@mail.com',
+                name: 'Dmytry'
+            }).save();
+
+            await user.setPassword('somePass');
+
+            const pedingGame = await new Game({
+                player1: 'aaaaaaaaaaaaaaaaaaaaaaaa',
+                player2: user.id,
+                status: 'PENDING'
+            }).save();
+
+            const { token } = await request(server)
+                .post('/api/v1/user/session/create')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ email: 'some@mail.com', password: 'somePass' })
+                .expect(200)
+                .end()
+                .get('body');
+
+            console.log(555555555555555555555555555555555555555555555555555555555555555555555555555555);
+
+            ioClient.on('connect', () => {
+                console.log(999999999999999999999999999999999999999999999999999999999999999999999);
+                ioClient.emit('clientEvent', 'Я еще не отослал свой токен');
+                ioClient
+                    .emit('authenticate', { token: '123' })
+                    .on('authenticated', () => {
+                        console.log(22222222222222222222222222222222222222222222222222222);
+                        ioClient.emit('startGame', { gameId: pedingGame.id, user });
+                        done();
+                    })
+                    .on('unauthorized', (msg) => {
+                        console.log(444444444444444444444444444444444444444444444444444444);
+                        console.log(`unauthorized: ${ JSON.stringify(msg.data)}`);
+                        done()
+
+                    });
+            });
         });
     });
 });

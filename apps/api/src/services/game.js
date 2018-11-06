@@ -35,6 +35,30 @@ export default class GameService {
         return this._getGamesHistory.bind(this);
     }
 
+    /**
+     * Returns endpoint which starts game
+     * @returns {Function(req, res, next)} endpoint starts game
+     */
+    get startGame() {
+        return this._startGame.bind(this);
+    }
+
+    /**
+     * Returns endpoint which ends game
+     * @returns {Function(req, res, next)} endpoint ends game
+     */
+    get endGame() {
+        return this._endGame.bind(this);
+    }
+
+    /**
+     * Returns endpoint which returns game board after user move
+     * @returns {Function(req, res, next)} endpoint returns game board after user move
+     */
+    get makeMove() {
+        return this._makeMove.bind(this);
+    }
+
     async _joinOrCreateGame(req, res, next) {
         try {
             const userId = req.user.id;
@@ -64,7 +88,7 @@ export default class GameService {
                         {
                             player1: game.player1,
                             player2: game.player2,
-                            status: 'IN_PROGRESS',
+                            status: 'PENDING',
                             board: []
                         }
                     );
@@ -138,6 +162,33 @@ export default class GameService {
             res.json(games.map(dumpGame));
         } catch (err) {
             next(err);
+        }
+    }
+
+    async _startGame(data) {
+        try {
+            const gameId = data.gameId;
+        } catch (err) {
+            this._logger.error('Something went wrong', err);
+        }
+    }
+
+    async _endGame(data) {
+        try {
+            const gameId = data.gameId;
+        } catch (err) {
+            this._logger.error('Something went wrong', err);
+        }
+    }
+
+    async _makeMove(data) {
+        try {
+            const userId = data.user.id;
+            const gameId = data.gameId;
+
+            await this._checkifUserExists(userId);
+        } catch (err) {
+            this._logger.error('Something went wrong', err);
         }
     }
 

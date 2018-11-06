@@ -9,7 +9,6 @@ import fs from 'fs';
 import config from '../../config/config';
 import routes from '../routes';
 import passport from './passport';
-import socketioJwt from 'socketio-jwt';
 import { NotFoundError, errorHandler } from './errorHandler';
 import { Game } from '../models';
 
@@ -51,16 +50,7 @@ export default class Service {
 
         const io = socketIo(http.createServer(express));
 
-        io.on('connection', socketioJwt.authorize({
-            secret: config.secretKey,
-            timeout: 15000
-        })).on('authenticated', (socket) => {
-            this._logger.info(`Это мое имя из токена: ${socket.decoded_token.displayName}`);
-            
-            socket.on('clientEvent', (data) => {
-                this._logger.info(data);
-            });
-        });
+        io.use(routes.socketRouter);
 
         this._app = express.listen(this._config.port, () => {
             this._logger.info(`App listening on port ${this._config.port}`);

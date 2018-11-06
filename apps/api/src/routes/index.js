@@ -1,7 +1,8 @@
 import user from './user';
-import game from './game';
+import game, { socketRouter } from './game';
 
 export default {
     user,
-    game
+    game,
+    socketRouter
 };
