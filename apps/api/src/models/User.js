@@ -11,6 +11,11 @@ const userSchema = new Schema({
 }, { timestamps: true });
 
 userSchema.methods = {
+    /**
+     * Checks user password
+     * @param {String} candidatePassword candidate password
+     * @returns {Promise<Boolean>} promise which will be resolved when password compared
+     */
     isValidPassword: async function (candidatePassword) {
         if (!candidatePassword) {
             return false;
@@ -20,6 +25,12 @@ userSchema.methods = {
         }
         return await bcrypt.compare(candidatePassword, this.passwordHash);
     },
+
+    /**
+     * Sets user password
+     * @param {String} password password to set
+     * @returns {Promise<>} promise which will be resolved when password set
+     */
     setPassword: async function (password) {
         if (password) {
             this.passwordHash = await bcrypt.hash(password, config.saltRounds);
@@ -28,7 +39,13 @@ userSchema.methods = {
         }
         return this.save();
     },
-    update: async function (userObject) {
+
+    /**
+     * Updates user object
+     * @param {String} userObject user object
+     * @returns {Promise<>} promise which will be resolved when user updated
+     */
+    updateMethod: async function (userObject) {
         this.name = userObject.name;
         this.email = userObject.email;
 

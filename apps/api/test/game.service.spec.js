@@ -31,7 +31,7 @@ const app = new App(configuration);
 let server;
 let sandbox;
 
-describe('UserService', () => {
+describe('GameService', () => {
     before(async () => {
         await app.start();
         server = app.server;
@@ -100,11 +100,100 @@ describe('UserService', () => {
                     id: sinon.match.string,
                     player1: 'aaaaaaaaaaaaaaaaaaaaaaaa',
                     player2: user.id,
+                    winner: null,
                     status: 'FAILED',
                     createdAt: sinon.match.string,
                     updatedAt: sinon.match.string
                 } ]
             );
+        });
+
+        it('Should return 200 if created game', async () => {
+            const user = await new User({
+                email: 'some@mail.com',
+                name: 'Dmytry'
+            }).save();
+
+            await user.setPassword('somePass');
+
+            const { token } = await request(server)
+                .post('/api/v1/user/session/create')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ email: 'some@mail.com', password: 'somePass' })
+                .expect(200)
+                .end()
+                .get('body');
+
+            const response = await request(server)
+                .post('/api/v1/games')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .set('Authorization', token)
+                .expect(200)
+                .end()
+                .get('body');
+
+            sinon.assert.match(
+                response,
+                {
+                    id: sinon.match.string,
+                    player1: user.id,
+                    player2: null,
+                    winner: null,
+                    status: 'PENDING',
+                    createdAt: sinon.match.string,
+                    updatedAt: sinon.match.string
+                }
+            );
+        });
+
+        it('Should return 200 if joined game', async () => {
+            const user = await new User({
+                email: 'some@mail.com',
+                name: 'Dmytry'
+            }).save();
+
+            await user.setPassword('somePass');
+
+            const pedingGame = await new Game({
+                player1: 'aaaaaaaaaaaaaaaaaaaaaaaa',
+                player2: null,
+                status: 'PENDING'
+            }).save();
+
+            const { token } = await request(server)
+                .post('/api/v1/user/session/create')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ email: 'some@mail.com', password: 'somePass' })
+                .expect(200)
+                .end()
+                .get('body');
+
+            const response = await request(server)
+                .post('/api/v1/games')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .set('Authorization', token)
+                .expect(200)
+                .end()
+                .get('body');
+
+            sinon.assert.match(
+                response,
+                {
+                    id: pedingGame.id,
+                    player1: 'aaaaaaaaaaaaaaaaaaaaaaaa',
+                    player2: user.id,
+                    winner: null,
+                    status: 'IN_PROGRESS',
+                    createdAt: sinon.match.string,
+                    updatedAt: sinon.match.string
+                }
+            );
+
+            
         });
     });
 });

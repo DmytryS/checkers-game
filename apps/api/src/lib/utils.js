@@ -12,8 +12,8 @@ export function dumpGame(game) {
     return {
         id: game.id,
         player1: game.player1,
-        player2: game.player2,
-        winner: game.winner,
+        player2: game.player2 || null,
+        winner: game.winner || null,
         status: game.status,
         createdAt: game.createdAt,
         updatedAt: game.updatedAt

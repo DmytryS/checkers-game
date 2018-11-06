@@ -1,5 +1,3 @@
-import RedisClient from './RedisClient';
+import RedisClient from './redisClient';
 
-export default {
-    RedisClient
-};
+export default RedisClient;

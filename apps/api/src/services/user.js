@@ -237,7 +237,9 @@ export default class UserService {
 
     async _updateUserInfo(req, res, next) {
         try {
-            const userObject = this._validateUser(req, next);
+            this._validateUser(req, next);
+
+            const userObject = req.body;
             const user = await User.findById(req.user.id);
 
             if (user.email !== userObject.email && await User.findOne({ email: userObject.email })) {
@@ -247,7 +249,7 @@ export default class UserService {
             if (user.name !== userObject.name && await User.findOne({ name: userObject.name })) {
                 throw new ValidationError(`User with name of \'${userObject.name}\' already exists`);
             }
-            const updatedUser = await user.update(userObject);
+            const updatedUser = await user.updateMethod(userObject);
 
             res.json(dumpUser(updatedUser));
         } catch (err) {
