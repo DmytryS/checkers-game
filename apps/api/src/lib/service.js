@@ -1,8 +1,7 @@
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 import Express from 'express';
-import http from 'http';
-import socketIo from 'socket.io';
+import io from 'socket.io';
 import log4js from 'log4js';
 import path from 'path';
 import fs from 'fs';
@@ -11,6 +10,9 @@ import routes from '../routes';
 import passport from './passport';
 import { NotFoundError, errorHandler } from './errorHandler';
 import { Game } from '../models';
+import redisClient from './redisClient';
+
+import socketioJwt from 'socketio-jwt';
 
 /**
  * Main class
@@ -21,7 +23,7 @@ export default class Service {
         this._logger = log4js.getLogger('Main Service');
         this._db = null;
         this._app = null;
-
+        this._socket = null;
         this._configureLogs();
     }
 
@@ -48,13 +50,25 @@ export default class Service {
 
         await this._stopAllGames();
 
-        const io = socketIo(http.createServer(express));
-
-        io.use(routes.socketRouter);
-
         this._app = express.listen(this._config.port, () => {
             this._logger.info(`App listening on port ${this._config.port}`);
         });
+
+        this._socket = io.listen(this._app);
+        this._socket
+            .on('connection', socketioJwt.authorize({
+                secret: config.secretKey,
+                timeout: 15000
+            }))
+            .on('authenticated', (socket) => {
+                for (const key in routes.socketEvents) {
+                    socket.on(key, routes.socketEvents[ key ].bind(null, socket, this._socket));
+                }
+            })
+            .on('error', (error) => {
+                this._logger.error('Websocket error: ', error);
+            });
+
 
         process.on('uncaughtException', (err) => {
             this._logger.error('Unhandled exception', err);
@@ -76,6 +90,8 @@ export default class Service {
     async stop() {
         await this._app.close();
         await this._db.close();
+        await redisClient.close();
+        this._socket.close();
         this._logger.info('Server stopped');
     }
 

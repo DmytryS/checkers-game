@@ -78,6 +78,14 @@ export class RedisClient {
     exists(key) {
         return this._redisClient.existsAsync(key);
     }
+
+    /**
+     * Closes redis connection
+     * @returns {Promise} Returns promise which will be resolved when connection closed
+     */
+    close() {
+        return this._redisClient.quit();
+    }
 }
 
 export default new RedisClient(config);

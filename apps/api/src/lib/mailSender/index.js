@@ -1,3 +1,3 @@
-import MailSender from './MailSender';
+import mailSender from './mailSender';
 
-export default MailSender;
+export default mailSender;

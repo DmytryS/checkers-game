@@ -2,7 +2,7 @@ import sinon from 'sinon';
 import should from 'should'; // eslint-disable-line
 import App from '../src/lib/service';
 import request from 'supertest-promised';
-import socketIoClient from 'socket.io-client';
+import io from 'socket.io-client';
 import { User, Game } from '../src/models';
 
 const configuration = {
@@ -35,18 +35,19 @@ const ioOptions = {
 };
 const app = new App(configuration);
 let server;
-let ioClient;
+let socket;
 let sandbox;
 
 describe('GameService', () => {
     before(async () => {
         await app.start();
         server = app.server;
-        ioClient = socketIoClient('http://localhost:3000', ioOptions);
+        socket = io.connect(`http://localhost:${configuration.port}`, ioOptions);
         sandbox = sinon.createSandbox();
     });
   
     after(async () => {
+        await app.clearDb();
         await app.stop();
     });
   
@@ -203,47 +204,78 @@ describe('GameService', () => {
         });
 
         it.only('Should start game through socket', async (done) => {
-            const user = await new User({
-                email: 'some@mail.com',
+            const user1 = await new User({
+                email: 'somePlayer1@mail.com',
                 name: 'Dmytry'
             }).save();
-
-            await user.setPassword('somePass');
-
-            const pedingGame = await new Game({
-                player1: 'aaaaaaaaaaaaaaaaaaaaaaaa',
-                player2: user.id,
-                status: 'PENDING'
+            const user2 = await new User({
+                email: 'somePlayer2@mail.com',
+                name: 'Vasya'
             }).save();
 
-            const { token } = await request(server)
+            await user1.setPassword('somePass');
+            await user2.setPassword('somePass');
+
+            const { token: player1Token } = await request(server)
                 .post('/api/v1/user/session/create')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
-                .send({ email: 'some@mail.com', password: 'somePass' })
+                .send({ email: 'somePlayer1@mail.com', password: 'somePass' })
                 .expect(200)
                 .end()
                 .get('body');
 
-            console.log(555555555555555555555555555555555555555555555555555555555555555555555555555555);
+            const { token: player2Token } = await request(server)
+                .post('/api/v1/user/session/create')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ email: 'somePlayer2@mail.com', password: 'somePass' })
+                .expect(200)
+                .end()
+                .get('body');
 
-            ioClient.on('connect', () => {
-                console.log(999999999999999999999999999999999999999999999999999999999999999999999);
-                ioClient.emit('clientEvent', 'Я еще не отослал свой токен');
-                ioClient
-                    .emit('authenticate', { token: '123' })
-                    .on('authenticated', () => {
-                        console.log(22222222222222222222222222222222222222222222222222222);
-                        ioClient.emit('startGame', { gameId: pedingGame.id, user });
-                        done();
-                    })
-                    .on('unauthorized', (msg) => {
-                        console.log(444444444444444444444444444444444444444444444444444444);
-                        console.log(`unauthorized: ${ JSON.stringify(msg.data)}`);
-                        done()
 
-                    });
-            });
+            const pedingGame = await request(server)
+                .post('/api/v1/games')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .set('Authorization', player1Token)
+                .expect(200)
+                .end()
+                .get('body');
+
+            await request(server)
+                .post('/api/v1/games')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .set('Authorization', player2Token)
+                .end();
+
+            socket
+                .emit('authenticate', { token: player1Token })
+                .on('authenticated', () => {
+                    socket
+                        .emit('startGame', { gameId: pedingGame.id })
+                        .on('gameData', (gameData) => {
+                            //console.log(gameData);
+                        });
+                })
+                .on('unauthorized', (msg) => {
+                    done(msg);
+                });
+
+            socket
+                .emit('authenticate', { token: player2Token })
+                .on('authenticated', () => {
+                    socket
+                        .emit('startGame', { gameId: pedingGame.id })
+                        .on('gameData', (gameData) => {
+                            console.log(gameData);
+                        });
+                })
+                .on('unauthorized', (msg) => {
+                    done(msg.data);
+                });
         });
     });
 });

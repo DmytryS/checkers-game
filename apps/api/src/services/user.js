@@ -97,7 +97,7 @@ export default class UserService {
                 dumpUser(user),
                 config.secretKey,
                 {
-                    expiresIn: '1d'
+                    expiresIn: '60m'
                 }
             );
             

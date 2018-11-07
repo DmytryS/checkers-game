@@ -78,7 +78,36 @@ gameSchema.methods = {
      */
     join: async function (userId) {
         this.player2 = userId;
+
+        return this.save();
+    },
+    
+    /**
+     * Marks game as started
+     * @returns {Promise<Game>} promise which will be resolved when game started
+     */
+    start: async function () {
         this.status = 'IN_PROGRESS';
+
+        return this.save();
+    },
+
+    /**
+     * Marks game as completed
+     * @returns {Promise<Game>} promise which will be resolved when game started
+     */
+    complete: async function () {
+        this.status = 'COMPLETED';
+
+        return this.save();
+    },
+
+    /**
+     * Marks game as failed
+     * @returns {Promise<Game>} promise which will be resolved when game started
+     */
+    fail: async function () {
+        this.status = 'FAILED';
 
         return this.save();
     }
