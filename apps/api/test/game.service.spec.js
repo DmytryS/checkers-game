@@ -256,26 +256,74 @@ describe('GameService', () => {
                 .on('authenticated', () => {
                     socket
                         .emit('startGame', { gameId: pedingGame.id })
-                        .on('gameData', (gameData) => {
-                            //console.log(gameData);
+                        .on('gameData', (gameData1) => {
+                            sinon.assert.match(
+                                gameData1,
+                                {
+                                    player1: {
+                                        id: user1.id,
+                                        status: 'ONLINE',
+                                        socketId: socket.id
+                                    },
+                                    player2: {
+                                        id: user2.id,
+                                        status: 'OFFLINE',
+                                        socketId: null
+                                    },
+                                    status: 'PENDING',
+                                    board: []
+                                });
+
+                            const socketTwo = io.connect(`http://localhost:${configuration.port}`, ioOptions);
+
+                            socketTwo.on('connect', () => {
+                                socketTwo
+                                    .emit('authenticate', { token: player2Token })
+                                    .on('authenticated', () => {
+                                        socketTwo
+                                            .emit('startGame', { gameId: pedingGame.id })
+                                            .on('gameData', (gameData2) => {
+                                                sinon.assert.match(
+                                                    gameData2,
+                                                    {
+                                                        player1: {
+                                                            id: user1.id,
+                                                            status: 'ONLINE',
+                                                            socketId: socket.id
+                                                        },
+                                                        player2: {
+                                                            id: user2.id,
+                                                            status: 'ONLINE',
+                                                            socketId: socketTwo.id
+                                                        },
+                                                        status: 'IN_PROGRESS',
+                                                        board: []
+                                                    });
+
+                                                done();
+                                            })
+                                            .on('error', (msg) => {
+                                                done(msg);
+                                            });
+                                    })
+                                    .on('unauthorized', (msg) => {
+                                        console.log(555555555555555555555555555, msg);
+                                        
+                                        done(msg);
+                                    });
+                            });
+                        })
+                        .on('error', (msg) => {
+                            console.log(555555555555555555555555555, msg);
+
+                            done(msg);
                         });
                 })
                 .on('unauthorized', (msg) => {
                     done(msg);
                 });
 
-            socket
-                .emit('authenticate', { token: player2Token })
-                .on('authenticated', () => {
-                    socket
-                        .emit('startGame', { gameId: pedingGame.id })
-                        .on('gameData', (gameData) => {
-                            console.log(gameData);
-                        });
-                })
-                .on('unauthorized', (msg) => {
-                    done(msg.data);
-                });
+            
         });
     });
 });
