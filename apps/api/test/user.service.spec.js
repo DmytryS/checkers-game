@@ -283,19 +283,19 @@ describe('UserService', () => {
     });
 
     describe('UserInfo', async () => {
-        const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
-
-        await user.setPassword('somePass');
-        const { token } = await request(server)
-            .post('/api/v1/user/session/create')
-            .set('Accept', 'application/json')
-            .set('Content-Type', 'application/json')
-            .send({ email: 'some@mail.com', password: 'somePass' })
-            .expect(200)
-            .end()
-            .get('body');
-
         it('should return 200 if returned user info', async () => {
+            const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
+
+            await user.setPassword('somePass');
+            const { token } = await request(server)
+                .post('/api/v1/user/session/create')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ email: 'some@mail.com', password: 'somePass' })
+                .expect(200)
+                .end()
+                .get('body');
+
             const response = await request(server)
                 .get('/api/v1/user')
                 .set('Accept', 'application/json')
@@ -306,25 +306,33 @@ describe('UserService', () => {
                 .end()
                 .get('body');
 
-    
-            should.equal(response, { email: 'some@mail.com', name: 'Dmytry', id: sinon.match.string });
+            sinon.assert.match(
+                response,
+                {
+                    id: sinon.match.string,
+                    email: 'some@mail.com',
+                    name: 'Dmytry',
+                    createdAt: sinon.match.string,
+                    updatedAt: sinon.match.string
+                }
+            );
         });
     });
 
     describe('UserUpdate', async () => {
-        const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
-
-        await user.setPassword('somePass');
-        const { token } = await request(server)
-            .post('/api/v1/user/session/create')
-            .set('Accept', 'application/json')
-            .set('Content-Type', 'application/json')
-            .send({ email: 'some@mail.com', password: 'somePass' })
-            .expect(200)
-            .end()
-            .get('body');
-
         it('should return 200 if user updated', async () => {
+            const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
+
+            await user.setPassword('somePass');
+            const { token } = await request(server)
+                .post('/api/v1/user/session/create')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ email: 'some@mail.com', password: 'somePass' })
+                .expect(200)
+                .end()
+                .get('body');
+
             const response = await request(server)
                 .post('/api/v1/user')
                 .set('Accept', 'application/json')
@@ -336,10 +344,30 @@ describe('UserService', () => {
                 .get('body');
 
     
-            should.equal(response, { email: 'other@mail.com', name: 'Petrovich' });
+            sinon.assert.match(
+                response,
+                {
+                    id: sinon.match.string,
+                    email: 'other@mail.com',
+                    name: 'Petrovich',
+                    createdAt: sinon.match.string,
+                    updatedAt: sinon.match.string
+                });
         });
         
         it('should return 400 if failed to update user when email already exists', async () => {
+            const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
+
+            await user.setPassword('somePass');
+            const { token } = await request(server)
+                .post('/api/v1/user/session/create')
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send({ email: 'some@mail.com', password: 'somePass' })
+                .expect(200)
+                .end()
+                .get('body');
+
             await new User({ email: 'other@mail.com', name: 'Dmytry' }).save();
 
             await request(server)

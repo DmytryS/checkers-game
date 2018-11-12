@@ -120,8 +120,20 @@ export default class Service {
      * @returns {Promise} returns promise which will be resolved when db cleared
      */
     async clearDb() {
-        await this._db.dropDatabase();
-        this._logger.info('Cleared DB');
+        if (process.env.NODE_ENV !== 'test') {
+            throw new Error('Will not drop collection until in test env');
+        }
+
+        return new Promise((res, rej) => {
+            this._db.dropDatabase((err) => {
+                this._logger.info('Cleared DB');
+                if (err) {
+                    this._logger.error(err);
+                    rej(err);
+                }
+                res();
+            });
+        });
     }
 
     _configureLogs() {

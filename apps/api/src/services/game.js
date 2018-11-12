@@ -1,5 +1,5 @@
 import log4js from 'log4js';
-import Checkers from '../lib/checkers';
+// import Checkers from '../lib/checkers';
 import validation from '../lib/validation';
 import { User, Game } from '../models';
 import { dumpGame } from '../lib/utils';

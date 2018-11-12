@@ -10,6 +10,8 @@ const userSchema = new Schema({
     passwordHash: { type: String }
 }, { timestamps: true });
 
+userSchema.index({ email: 1 }, { unique: true });
+
 userSchema.methods = {
     /**
      * Checks user password

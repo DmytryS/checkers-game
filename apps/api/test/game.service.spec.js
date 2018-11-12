@@ -1,5 +1,6 @@
 import sinon from 'sinon';
 import should from 'should'; // eslint-disable-line
+import redisClient from '../src/lib/redisClient';
 import App from '../src/lib/service';
 import request from 'supertest-promised';
 import io from 'socket.io-client';
@@ -47,7 +48,6 @@ describe('GameService', () => {
     });
   
     after(async () => {
-        await app.clearDb();
         await app.stop();
     });
   
@@ -171,6 +171,24 @@ describe('GameService', () => {
                 status: 'PENDING'
             }).save();
 
+            await redisClient.set(
+                pedingGame.id,
+                {
+                    player1: {
+                        id: user.id,
+                        status: 'OFFLINE',
+                        socketId: null
+                    },
+                    player2: {
+                        id: null,
+                        status: 'OFFLINE',
+                        socketId: null
+                    },
+                    status: 'PENDING',
+                    board: []
+                }
+            );
+
             const { token } = await request(server)
                 .post('/api/v1/user/session/create')
                 .set('Accept', 'application/json')
@@ -196,14 +214,14 @@ describe('GameService', () => {
                     player1: 'aaaaaaaaaaaaaaaaaaaaaaaa',
                     player2: user.id,
                     winner: null,
-                    status: 'IN_PROGRESS',
+                    status: 'PENDING',
                     createdAt: sinon.match.string,
                     updatedAt: sinon.match.string
                 }
             );
         });
 
-        it.only('Should start game through socket', async (done) => {
+        it('Should start game through socket', async () => {
             const user1 = await new User({
                 email: 'somePlayer1@mail.com',
                 name: 'Dmytry'
@@ -251,79 +269,81 @@ describe('GameService', () => {
                 .set('Authorization', player2Token)
                 .end();
 
-            socket
-                .emit('authenticate', { token: player1Token })
-                .on('authenticated', () => {
-                    socket
-                        .emit('startGame', { gameId: pedingGame.id })
-                        .on('gameData', (gameData1) => {
-                            sinon.assert.match(
-                                gameData1,
-                                {
-                                    player1: {
-                                        id: user1.id,
-                                        status: 'ONLINE',
-                                        socketId: socket.id
-                                    },
-                                    player2: {
-                                        id: user2.id,
-                                        status: 'OFFLINE',
-                                        socketId: null
-                                    },
-                                    status: 'PENDING',
-                                    board: []
-                                });
+            let gameStarted = false;
 
-                            const socketTwo = io.connect(`http://localhost:${configuration.port}`, ioOptions);
+            return new Promise((res, rej) => {
+                socket
+                    .emit('authenticate', { token: player1Token })
+                    .on('authenticated', () => {
+                        socket
+                            .emit('startGame', { gameId: pedingGame.id })
+                            .on('gameData', (gameData1) => {
+                                if (!gameStarted) {
+                                    sinon.assert.match(
+                                        gameData1,
+                                        {
+                                            player1: {
+                                                id: user1.id,
+                                                status: 'ONLINE',
+                                                socketId: socket.id
+                                            },
+                                            player2: {
+                                                id: user2.id,
+                                                status: 'OFFLINE',
+                                                socketId: null
+                                            },
+                                            status: 'PENDING',
+                                            board: []
+                                        });
 
-                            socketTwo.on('connect', () => {
-                                socketTwo
-                                    .emit('authenticate', { token: player2Token })
-                                    .on('authenticated', () => {
+                                    const socketTwo = io.connect(`http://localhost:${configuration.port}`, ioOptions);
+
+                                    socketTwo.on('connect', () => {
                                         socketTwo
-                                            .emit('startGame', { gameId: pedingGame.id })
-                                            .on('gameData', (gameData2) => {
-                                                sinon.assert.match(
-                                                    gameData2,
-                                                    {
-                                                        player1: {
-                                                            id: user1.id,
-                                                            status: 'ONLINE',
-                                                            socketId: socket.id
-                                                        },
-                                                        player2: {
-                                                            id: user2.id,
-                                                            status: 'ONLINE',
-                                                            socketId: socketTwo.id
-                                                        },
-                                                        status: 'IN_PROGRESS',
-                                                        board: []
+                                            .emit('authenticate', { token: player2Token })
+                                            .on('authenticated', () => {
+                                                socketTwo
+                                                    .emit('startGame', { gameId: pedingGame.id })
+                                                    .on('gameData', (gameData2) => {
+                                                        sinon.assert.match(
+                                                            gameData2,
+                                                            {
+                                                                player1: {
+                                                                    id: user1.id,
+                                                                    status: 'ONLINE',
+                                                                    socketId: socket.id
+                                                                },
+                                                                player2: {
+                                                                    id: user2.id,
+                                                                    status: 'ONLINE',
+                                                                    socketId: socketTwo.id
+                                                                },
+                                                                status: 'IN_PROGRESS',
+                                                                turn: user1.id,
+                                                                board: []
+                                                            }
+                                                        );
+                                                        gameStarted = true;
+                                                        res();
+                                                    })
+                                                    .on('error', (msg) => {
+                                                        rej(msg);
                                                     });
-
-                                                done();
                                             })
-                                            .on('error', (msg) => {
-                                                done(msg);
+                                            .on('unauthorized', (msg) => {
+                                                rej(msg);
                                             });
-                                    })
-                                    .on('unauthorized', (msg) => {
-                                        console.log(555555555555555555555555555, msg);
-                                        
-                                        done(msg);
                                     });
+                                }
+                            })
+                            .on('error', (msg) => {
+                                rej(msg);
                             });
-                        })
-                        .on('error', (msg) => {
-                            console.log(555555555555555555555555555, msg);
-
-                            done(msg);
-                        });
-                })
-                .on('unauthorized', (msg) => {
-                    done(msg);
-                });
-
-            
+                    })
+                    .on('unauthorized', (msg) => {
+                        rej(msg);
+                    });
+            });
         });
     });
 });
