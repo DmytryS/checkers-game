@@ -1,28 +1,34 @@
 
 
 export default class Checkers {
-    constructor() {
+    constructor(gameBoard) {
         this._board = new Array(8);
         this._availableJumps = {};
         this._jumpOccurred = false;
         this._game = false;
+
+        if (gameBoard) {
+            this._board = gameBoard;
+        } else {
+            this._initGameBoard();
+        }
     }
 
     _initGameBoard() {
-        for(let i = 0; i < board.length; i++) {
-            board[ i ] = new Array(8);
-            for(let j = 0; j < board[ i ].length; j++) {
-                board[ i ][ j ] = '';
+        for(let i = 0; i < this._board.length; i++) {
+            this._board[ i ] = new Array(8);
+            for(let j = 0; j < this._board[ i ].length; j++) {
+                this._board[ i ][ j ] = '';
             }
         }
     }
 
-    set VirtualBoard(data) {
+    set board(data) {
         this._board = data;
     }
 
-    get VirtualBoard() {
-        return board;
+    get board() {
+        return this._board;
     }
 
     populateBoard(positions) {
@@ -31,7 +37,7 @@ export default class Checkers {
             let x = coord[ 0 ].charCodeAt(0) - 97;
             let y = parseInt(coord[ 1 ]) - 1;
 		
-            board[ x ][ y ] = positions[ key ];
+            this._board[ x ][ y ] = positions[ key ];
         });
     }
 
@@ -72,8 +78,8 @@ export default class Checkers {
         }
         // update the this._board with the new location of the pieces
         if(bool) {
-            board[ oldX ][ oldY ] = '';
-            board[ newX ][ newY ] = piece;
+            this._board[ oldX ][ oldY ] = '';
+            this._board[ newX ][ newY ] = piece;
             this.kingMe(piece, newX, newY);
         }
 		
@@ -87,7 +93,7 @@ export default class Checkers {
 
         if((newY - oldY) !== 1 || ((newX - oldX) !== 1 && (newX - oldX) !== -1)) {
             bool = false;
-        } else if(board[ newX ][ newY ] !== '') {
+        } else if(this._board[ newX ][ newY ] !== '') {
             bool = false;
         }
         return bool;
@@ -99,7 +105,7 @@ export default class Checkers {
 
         if((newY - oldY) !== -1 || ((newX - oldX) !== 1 && (newX - oldX) !== -1)) {
             bool = false;
-        } else if(board[ newX ][ newY ] !== '') {
+        } else if(this._board[ newX ][ newY ] !== '') {
             bool = false;
         }
         return bool;
@@ -114,25 +120,25 @@ export default class Checkers {
 
         if (newY - oldY !== 2 || ((newX - oldX) !== 2 && (newX - oldX) !== -2)) {
             bool = false;
-        } else if(board[ newX ][ newY ] !== '') { // Check that the new location does not already have a piece there
+        } else if(this._board[ newX ][ newY ] !== '') { // Check that the new location does not already have a piece there
             bool = false;
         } else if(newX > oldX) {
             /* istanbul ignore if */
-            if(board[ oldX + 1 ][ oldY + 1 ] === '' || board[ oldX + 1 ][ oldY + 1 ].indexOf(pieceType[ 0 ]) !== -1) {
+            if(this._board[ oldX + 1 ][ oldY + 1 ] === '' || this._board[ oldX + 1 ][ oldY + 1 ].indexOf(pieceType[ 0 ]) !== -1) {
                 bool = false;
             } else {
                 // destroy the piece
-                board[ oldX + 1 ][ oldY + 1 ] = '';
+                this._board[ oldX + 1 ][ oldY + 1 ] = '';
                 this._jumpOccurred = true;
             }
             // the user jumped to the left
         } else if(newX < oldX) {
             /* istanbul ignore if */
-            if(board[ oldX - 1 ][ oldY + 1 ] === '' || board[ oldX - 1 ][ oldY + 1 ].indexOf(pieceType[ 0 ]) !== -1) {
+            if(this._board[ oldX - 1 ][ oldY + 1 ] === '' || this._board[ oldX - 1 ][ oldY + 1 ].indexOf(pieceType[ 0 ]) !== -1) {
                 bool = false;
             } else {
                 // destroy the piece
-                board[ oldX - 1 ][ oldY + 1 ] = '';
+                this._board[ oldX - 1 ][ oldY + 1 ] = '';
                 this._jumpOccurred = true;
             }
         }
@@ -149,25 +155,25 @@ export default class Checkers {
 
         if(oldY - newY !== 2 || ((newX - oldX) !== 2 && (newX - oldX) !== -2)) {
             bool = false;
-        } else if(board[ newX ][ newY ] !== '') {
+        } else if(this._board[ newX ][ newY ] !== '') {
             bool = false;
         } else if(newX > oldX) {
             /* istanbul ignore if */
-            if(board[ oldX + 1 ][ oldY - 1 ] === '' || board[ oldX + 1 ][ oldY - 1 ].indexOf(pieceType[ 0 ]) !== -1) {
+            if(this._board[ oldX + 1 ][ oldY - 1 ] === '' || this._board[ oldX + 1 ][ oldY - 1 ].indexOf(pieceType[ 0 ]) !== -1) {
                 bool = false;
             } else {
                 // destroy the piece
-                board[ oldX + 1 ][ oldY - 1 ] = '';
+                this._board[ oldX + 1 ][ oldY - 1 ] = '';
                 this._jumpOccurred = true;
             }
             // the user jumped to the left
         } else if(newX < oldX) {
             /* istanbul ignore if */
-            if(board[ oldX - 1 ][ oldY - 1 ] === '' || board[ oldX - 1 ][ oldY - 1 ].indexOf(pieceType[ 0 ]) !== -1) {
+            if(this._board[ oldX - 1 ][ oldY - 1 ] === '' || this._board[ oldX - 1 ][ oldY - 1 ].indexOf(pieceType[ 0 ]) !== -1) {
                 bool = false;
             } else {
                 // destroy the piece
-                board[ oldX - 1 ][ oldY - 1 ] = '';
+                this._board[ oldX - 1 ][ oldY - 1 ] = '';
                 this._jumpOccurred = true;
             }
 
@@ -178,11 +184,11 @@ export default class Checkers {
     kingMe(piece, newX, newY) {
         if(piece === 'wP') {
             if(newY === 7) {
-                board[ newX ][ newY ] = 'wK';
+                this._board[ newX ][ newY ] = 'wK';
             }
         } else if(piece === 'bP') {
             if(newY === 0) {
-                board[ newX ][ newY ] = 'bK';
+                this._board[ newX ][ newY ] = 'bK';
             }
         }
     }
@@ -204,23 +210,23 @@ export default class Checkers {
         // reset the value of flag for jumpoccurring
         this._jumpOccurred = false;
 
-        for(let row = 0; row < board.length; row++) {
-            for(let col = 0; col < board[ row ].length; col++) {
+        for(let row = 0; row < this._board.length; row++) {
+            for(let col = 0; col < this._board[ row ].length; col++) {
                 // Get piece of the same color
-                if(board[ row ][ col ].indexOf(colorSplit[ 0 ]) !== -1) {
+                if(this._board[ row ][ col ].indexOf(colorSplit[ 0 ]) !== -1) {
                     futureRowPositive = row + 2;
                     futureRowNegative = row - 2;
                     futureColPositive = col + 2;
                     futureColNegative = col - 2;
                     // FORWARD MOVE
                     // Make sure rows do not go out array dimensions
-                    if(futureColPositive < board[ row ].length && board[ row ][ col ] !== 'bP') {
+                    if(futureColPositive < this._board[ row ].length && this._board[ row ][ col ] !== 'bP') {
                         // Make sure cols do not go out of array dimensions
-                        if(futureRowPositive < board[ row ].length) {
+                        if(futureRowPositive < this._board[ row ].length) {
                             // check that there is ample jumping space, forward moves strictly enforce black mans to go forward
-                            if(board[ futureRowPositive ][ futureColPositive ] === '') {
+                            if(this._board[ futureRowPositive ][ futureColPositive ] === '') {
                                 // check that there is a piece in the spot and that it is the opponents
-                                if(board[ futureRowPositive - 1 ][ futureColPositive - 1 ].indexOf(colorSplit[ 0 ]) === -1 && board[ futureRowPositive - 1 ][ futureColPositive - 1 ] !== '') {
+                                if(this._board[ futureRowPositive - 1 ][ futureColPositive - 1 ].indexOf(colorSplit[ 0 ]) === -1 && this._board[ futureRowPositive - 1 ][ futureColPositive - 1 ] !== '') {
                                     // There is a jump available and the clicked piece is not the piece that can jump
                                     if(x === row && y === col) {
                                         bool = false;
@@ -229,16 +235,14 @@ export default class Checkers {
                                     }
 										
                                     bool = true;
-									
-									
                                 }
                             } // Make sure cols and rows do not go out of array dimensions negatively
                         }
                         if(futureRowNegative >= 0) {
                             // check to make sure there is ample jumping space
-                            if(board[ futureRowNegative ][ futureColPositive ] === '') {
+                            if(this._board[ futureRowNegative ][ futureColPositive ] === '') {
                                 // check that there is a piece between of opposite color
-                                if(board[ futureRowNegative + 1 ][ futureColPositive - 1 ].indexOf(colorSplit[ 0 ]) === -1 && board[ futureRowNegative + 1 ][ futureColPositive - 1 ] !== '') {
+                                if(this._board[ futureRowNegative + 1 ][ futureColPositive - 1 ].indexOf(colorSplit[ 0 ]) === -1 && this._board[ futureRowNegative + 1 ][ futureColPositive - 1 ] !== '') {
                                     // There is a jump available and the clicked piece is not the piece that can jump
                                     if(x === row && y === col) {
                                         bool = false;
@@ -246,7 +250,6 @@ export default class Checkers {
                                         return bool;
                                     }
                                     bool = true;
-									
                                 }
                             }
                         }
@@ -254,13 +257,13 @@ export default class Checkers {
                     }
                     // BACKWARD MOVE
                     // Make sure rows do not go out array dimensions
-                    if(futureColNegative >= 0 && board[ row ][ col ] !== 'wP') {
+                    if(futureColNegative >= 0 && this._board[ row ][ col ] !== 'wP') {
                         // Make sure cols do not go out of array dimensions
                         if(futureRowNegative >= 0) {
                             // check that there is ample jumping space, backward moves strictly enforce white mans to go backward
-                            if(board[ futureRowNegative ][ futureColNegative ] === '') {
+                            if(this._board[ futureRowNegative ][ futureColNegative ] === '') {
                                 // check that there is a piece in the spot and that it is the opponents
-                                if(board[ futureRowNegative + 1 ][ futureColNegative + 1 ].indexOf(colorSplit[ 0 ]) === -1 && board[ futureRowNegative + 1 ][ futureColNegative + 1 ] !== '') {
+                                if(this._board[ futureRowNegative + 1 ][ futureColNegative + 1 ].indexOf(colorSplit[ 0 ]) === -1 && this._board[ futureRowNegative + 1 ][ futureColNegative + 1 ] !== '') {
                                     // There is a jump available and the clicked piece is not the piece that can jump
                                     if(x === row && y === col) {
                                         bool = false;
@@ -269,16 +272,14 @@ export default class Checkers {
                                     }
 										
                                     bool = true;
-									
-									
                                 }
                             } // Make sure cols do not go out of array dimensions negatively
                         }
-                        if(futureRowPositive < board.length) {
+                        if(futureRowPositive < this._board.length) {
                             // check to make sure there is ample jumping space
-                            if(board[ futureRowPositive ][ futureColNegative ] === '') {
+                            if(this._board[ futureRowPositive ][ futureColNegative ] === '') {
                                 // check that there is a piece between of opposite color
-                                if(board[ futureRowPositive - 1 ][ futureColNegative + 1 ].indexOf(colorSplit[ 0 ]) === -1 && board[ futureRowPositive - 1 ][ futureColNegative + 1 ] !== '') {
+                                if(this._board[ futureRowPositive - 1 ][ futureColNegative + 1 ].indexOf(colorSplit[ 0 ]) === -1 && this._board[ futureRowPositive - 1 ][ futureColNegative + 1 ] !== '') {
                                     // There is a jump available and the clicked piece is not the piece that can jump
                                     if(x === row && y === col) {
                                         bool = false;
@@ -302,20 +303,20 @@ export default class Checkers {
         let chr = String.fromCharCode(97 + firstDigit);
         let boardPosition = chr.concat(secondDigit + 1);
 
-        if(boardLocation in availableJumps) {
-            availableJumps[ boardLocation ].push(boardPosition);
+        if(boardLocation in this._availableJumps) {
+            this._availableJumps[ boardLocation ].push(boardPosition);
         } else {
-            availableJumps[ boardLocation ] = [ boardPosition ];
+            this._availableJumps[ boardLocation ] = [ boardPosition ];
         }
     }
 
     forceJump(startPos, endPos) {
-        if(Object.keys(availableJumps).length === 0) {
+        if(Object.keys(this._availableJumps).length === 0) {
             return true;
         }
-        if(startPos in availableJumps) {
-            for(let i = 0; i < availableJumps[ startPos ].length; i++) {
-                if(availableJumps[ startPos ][ i ] === endPos) {
+        if(startPos in this._availableJumps) {
+            for(let i = 0; i < this._availableJumps[ startPos ].length; i++) {
+                if(this._availableJumps[ startPos ][ i ] === endPos) {
                     // clear out the map for til the next time
                     this._availableJumps = {};
                     return true;
@@ -327,14 +328,14 @@ export default class Checkers {
 
     checkDoubleJump(piece, position) {
         checkForJumps(piece, position);
-        if(Object.keys(availableJumps).length === 0) {
+        if(Object.keys(this._availableJumps).length === 0) {
             return false;
         }
         return true;
     }
 
     getJumpOccurred() {
-        return jumpOccurred;
+        return this._jumpOccurred;
     }
 
     checkWinLose(playerColor) {
@@ -357,7 +358,7 @@ export default class Checkers {
         return result;
     }
 
-    boardContains(board, value) {
+    boardContains(value) {
         let piece;
         let king;
 
@@ -369,9 +370,9 @@ export default class Checkers {
             king = 'wK';
         }
 		
-        for (let i = 0; i < board.length; i++) {
-            for (let k = 0; k < board[ i ].length; k++) {
-                if (board[ i ][ k ] === piece || board[ i ][ k ] === king) {
+        for (let i = 0; i < this._board.length; i++) {
+            for (let k = 0; k < this._board[ i ].length; k++) {
+                if (this._board[ i ][ k ] === piece || this._board[ i ][ k ] === king) {
                     return true;
                 }
             }

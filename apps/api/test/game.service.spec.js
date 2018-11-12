@@ -292,8 +292,7 @@ describe('GameService', () => {
                                                 status: 'OFFLINE',
                                                 socketId: null
                                             },
-                                            status: 'PENDING',
-                                            board: []
+                                            status: 'PENDING'
                                         });
 
                                     const socketTwo = io.connect(`http://localhost:${configuration.port}`, ioOptions);
@@ -320,7 +319,16 @@ describe('GameService', () => {
                                                                 },
                                                                 status: 'IN_PROGRESS',
                                                                 turn: user1.id,
-                                                                board: []
+                                                                board: [
+                                                                    [ '', '', '', '', '', '', '', '' ],
+                                                                    [ '', '', '', '', '', '', '', '' ],
+                                                                    [ '', '', '', '', '', '', '', '' ],
+                                                                    [ '', '', '', '', '', '', '', '' ],
+                                                                    [ '', '', '', '', '', '', '', '' ],
+                                                                    [ '', '', '', '', '', '', '', '' ],
+                                                                    [ '', '', '', '', '', '', '', '' ],
+                                                                    [ '', '', '', '', '', '', '', '' ]
+                                                                ]
                                                             }
                                                         );
                                                         gameStarted = true;

@@ -1,5 +1,5 @@
 import log4js from 'log4js';
-// import Checkers from '../lib/checkers';
+import Checkers from '../lib/checkers';
 import validation from '../lib/validation';
 import { User, Game } from '../models';
 import { dumpGame } from '../lib/utils';
@@ -99,8 +99,7 @@ export default class GameService {
                                 status: 'OFFLINE',
                                 socketId: null
                             },
-                            status: 'PENDING',
-                            board: []
+                            status: 'PENDING'
                         }
                     );
                 } else {
@@ -119,8 +118,7 @@ export default class GameService {
                                 status: 'OFFLINE',
                                 socketId: null
                             },
-                            status: 'PENDING',
-                            board: []
+                            status: 'PENDING'
                         }
                     );
                 }
@@ -160,8 +158,7 @@ export default class GameService {
                                 status: 'OFFLINE',
                                 socketId: null
                             },
-                            status: 'PENDING',
-                            board: []
+                            status: 'PENDING'
                         }
                     );
                 }
@@ -212,6 +209,10 @@ export default class GameService {
                 await game.start();
 
                 redisGame.status = 'IN_PROGRESS';
+
+                const checkersGame = new Checkers();
+
+                redisGame.board = checkersGame.board;
             }
 
             redisGame = {
@@ -226,8 +227,7 @@ export default class GameService {
                     status: game.player2 === userId ? 'ONLINE' : redisGame.player2.status,
                     socketId: game.player2 === userId ? socket.id : redisGame.player2.socketId
                 },
-                turn: redisGame.player1.id,
-                board: []
+                turn: redisGame.player1.id
             };
 
             await this._redisClient.set(
