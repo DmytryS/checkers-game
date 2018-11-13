@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 import Express from 'express';
 import io from 'socket.io';
+import cors from 'cors';
 import log4js from 'log4js';
 import path from 'path';
 import fs from 'fs';
@@ -36,6 +37,7 @@ export default class Service {
         express.use(Express.json());
         express.use(Express.urlencoded({ extended: false }));
         express.use(cookieParser());
+        express.use(cors());
         express.use(this._config.baseUrl, routes.game);
         express.use(this._config.baseUrl, routes.user);
         express.use(passport.initialize());

@@ -6,3 +6,4 @@ package-lock.json
 /apps/api/logs/*
 /apps/api/config/*.json
 /apps/api/coverage
+/apps/registration/config/*.json

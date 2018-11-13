@@ -121,7 +121,7 @@ describe('UserService', () => {
             const action = await Action.create({ userId: user.id, type: 'REGISTER' });
 
             await request(server)
-                .post(`/api/v1/actions/${action.id}`)
+                .put(`/api/v1/actions/${action.id}`)
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send({ password: 'SomePassword123' })
@@ -131,7 +131,7 @@ describe('UserService', () => {
         
         it('should return 404 if action not exists', async () => {
             await request(server)
-                .post('/api/v1/actions/aaaaaaaaaaaaaaaaaaaaaaaa')
+                .put('/api/v1/actions/aaaaaaaaaaaaaaaaaaaaaaaa')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send({ password: 'SomePassword123' })
@@ -263,7 +263,7 @@ describe('UserService', () => {
                 .get('body');
 
             const result = await request(server)
-                .post('/api/v1/user/session/renew')
+                .put('/api/v1/user/session/renew')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .set('Authorization', token)
@@ -334,7 +334,7 @@ describe('UserService', () => {
                 .get('body');
 
             const response = await request(server)
-                .post('/api/v1/user')
+                .put('/api/v1/user')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .set('Authorization', token)
@@ -371,7 +371,7 @@ describe('UserService', () => {
             await new User({ email: 'other@mail.com', name: 'Dmytry' }).save();
 
             await request(server)
-                .post('/api/v1/user')
+                .put('/api/v1/user')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .set('Authorization', token)

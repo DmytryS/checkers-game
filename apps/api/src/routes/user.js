@@ -11,7 +11,7 @@ const userService = new UserService();
 router.route('/user/session/create')
     .post(userService.sessionCreate);
 router.route('/user/session/renew')
-    .post(passport.authenticateJwt, userService.sessionRenew);
+    .put(passport.authenticateJwt, userService.sessionRenew);
 
 // User
 router.route('/user/register')
@@ -20,11 +20,11 @@ router.route('/user/resetPassword')
     .post(userService.resetUserPassword);
 router.route('/user')
     .get(passport.authenticateJwt, userService.getUserInfo)
-    .post(passport.authenticateJwt, userService.updateUserInfo);
+    .put(passport.authenticateJwt, userService.updateUserInfo);
 
 // Action
 router.route('/actions/:actionId')
     .get(userService.getAction)
-    .post(userService.runAction);
+    .put(userService.runAction);
 
 export default router;
