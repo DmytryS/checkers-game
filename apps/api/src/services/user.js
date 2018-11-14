@@ -88,7 +88,7 @@ export default class UserService {
 
     async _sessionCreate(req, res, next) {
         try {
-            this._validateUserCredentials(req, next);
+            this._validateUserCredentials(req);
             
             const user = await passport.authenticateCredentials(req);
 
@@ -126,21 +126,56 @@ export default class UserService {
 
     async _registerUser(req, res, next) {
         try {
-            this._validateUser(req, next);
+            this._validateUser(req);
             const userObject = req.body;
+            let action;
+            let user = await User.findOne({
+                email: userObject.email,
+                name: userObject.name
+            });
 
-            if (await User.findOne({ email: userObject.email })) {
-                throw new ValidationError(`User with email of \'${userObject.email}\' already exists`);
-            }
-            if (await User.findOne({ name: userObject.name })) {
+            const existingUserWithName = await User.findOne({
+                email: { $ne: userObject.email },
+                name: userObject.name
+            });
+            const existingUserWithEmail = await User.findOne({
+                email: userObject.email,
+                name: { $ne: userObject.name }
+            });
+
+            if (existingUserWithName) {
                 throw new ValidationError(`User with name of \'${userObject.name}\' already exists`);
             }
+            if (existingUserWithEmail) {
+                throw new ValidationError(`User with email of \'${userObject.email}\' already exists`);
+            }
 
-            const user = await new User(userObject).save();
-            const action = await new Action({
-                userId: user.id,
-                type: 'REGISTER'
-            }).save();
+            if (user) {
+                if (user.status === 'ACTIVE') {
+                    throw new ValidationError(`User with name of \'${userObject.name}\' already exists`);
+                }
+                if (user.status === 'PENDING') {
+                    action = await Action.findOne({
+                        userId: user.id,
+                        type: 'REGISTER'
+                    });
+
+                    if (!action) {
+                        action = await new Action({
+                            userId: user.id,
+                            type: 'REGISTER'
+                        }).save();
+                    }
+                }
+            } else {
+                user = await new User(userObject).save();
+
+                action = await new Action({
+                    userId: user.id,
+                    type: 'REGISTER'
+                }).save();
+            }
+            
 
             await mailSender.send(
                 user.email,
@@ -148,7 +183,7 @@ export default class UserService {
                 {
                     actionId: action.id,
                     name: user.name,
-                    uiUrl: config.uiUrl
+                    uiUrl: process.env.NODE_ENV === 'test' ? 'http://localhost' : config.uiUrl
                 }
             );
 
@@ -174,11 +209,11 @@ export default class UserService {
             const actionId = req.params.actionId;
             const action = await this._checkifActionExists(actionId);
 
-            this._validateUserPassword(req, next);
-
+            this._validateUserPassword(req);
             const user = await User.findById(action.userId);
             
             await user.setPassword(req.body.password);
+            
             await action.remove();
 
             res.sendStatus(200);
@@ -191,7 +226,7 @@ export default class UserService {
         let user;
 
         try {
-            this._validateEmail(req, next);
+            this._validateEmail(req);
 
             user = await User.findOne({ email: req.body.email });
 
@@ -210,7 +245,7 @@ export default class UserService {
                 {
                     actionId: action.id,
                     name: user.name,
-                    uiUrl: config.uiUrl
+                    uiUrl: process.env.NODE_ENV === 'test' ? 'http://localhost' : config.uiUrl
                 }
             );
             
@@ -237,19 +272,19 @@ export default class UserService {
 
     async _updateUserInfo(req, res, next) {
         try {
-            this._validateUser(req, next);
+            this._validateUser(req);
 
             const userObject = req.body;
             const user = await User.findById(req.user.id);
 
-            if (user.email !== userObject.email && await User.findOne({ email: userObject.email })) {
-                throw new ValidationError(`User with email of \'${userObject.email}\' already exists`);
+            if (user.email !== userObject.email) {
+                throw new ValidationError('Can not change email');
             }
 
             if (user.name !== userObject.name && await User.findOne({ name: userObject.name })) {
                 throw new ValidationError(`User with name of \'${userObject.name}\' already exists`);
             }
-            const updatedUser = await user.updateMethod(userObject);
+            const updatedUser = await user.updateMethod({ name: userObject.name });
 
             res.json(dumpUser(updatedUser));
         } catch (err) {
@@ -275,31 +310,33 @@ export default class UserService {
         return action;
     }
 
-    _validateUser(req, next) {
+    _validateUser(req) {
         const validator = validation.validator;
         const validationRules = validator.isObject()
             .withRequired('email', validator.isString({ regex: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/ }))
             .withRequired('name', validator.isString());
 
-        validation.validate(validationRules, req.body, next);
+        validation.validate(validationRules, req.body);
     }
 
-    _validateEmail(req, next) {
+    _validateEmail(req) {
         const validator = validation.validator;
         const validationRules = validator.isObject()
             .withRequired('email', validator.isString({ regex: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/ }));
 
-        validation.validate(validationRules, req.body, next);
+        validation.validate(validationRules, req.body);
     }
 
-    _validateUserPassword(req, next) {
+    _validateUserPassword(req) {
         const validatepasswordLength = (value, onError) => {
-            if (value.password.length < config.minPasswordLength) {
-                return onError(`Password cannot be less then ${ config.minPasswordLength } symbols`, 'password', null);
-            }
+            if (value.password) {
+                if (value.password.length < config.minPasswordLength) {
+                    return onError(`Password cannot be less then ${ config.minPasswordLength } symbols`, 'password', null);
+                }
         
-            if (!/(.*[a-z])(?=.*[A-Z])(?=.*[0-9])/.test(value.password)) {
-                return onError('Password must have lowercase letters, uppercase letters and numbers', 'password', null);
+                if (!/^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})/.test(value.password)) {
+                    return onError('Password must have lowercase letters, uppercase letters and numbers', 'password', null);
+                }
             }
         };
 
@@ -308,15 +345,15 @@ export default class UserService {
             .withCustom(validatepasswordLength.bind(this))
             .withRequired('password', validator.isString());
 
-        validation.validate(validationRules, req.body, next);
+        validation.validate(validationRules, req.body);
     }
 
-    _validateUserCredentials(req, next) {
+    _validateUserCredentials(req) {
         const validator = validation.validator;
         const validationRules = validator.isObject()
             .withRequired('email', validator.isString({ regex: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/ }))
             .withRequired('password', validator.isString());
 
-        validation.validate(validationRules, req.body, next);
+        validation.validate(validationRules, req.body);
     }
 }

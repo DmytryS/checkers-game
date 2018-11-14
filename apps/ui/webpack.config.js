@@ -4,6 +4,7 @@ const path = require('path');
 const config = require('./config/config');
 
 module.exports = {
+    devtool: 'sourcemap',
     entry: './src/main.ts',
     module: {
         rules: [
@@ -42,6 +43,8 @@ module.exports = {
         runtimeChunk: true
     },
     devServer: {
+        contentBase: path.resolve(__dirname, 'src/'),
+        watchContentBase: true,
         historyApiFallback: true,
         port: 8080
     }

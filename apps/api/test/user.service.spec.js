@@ -26,7 +26,8 @@ const configuration = {
             }
         }
     },
-    port: 3000
+    port: 3000,
+    uiUrl: 'http://localhost'
 };
 const app = new App(configuration);
 let server;
@@ -338,7 +339,7 @@ describe('UserService', () => {
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .set('Authorization', token)
-                .send({ email: 'other@mail.com', name: 'Petrovich' })
+                .send({ email: 'some@mail.com', name: 'Petrovich' })
                 .expect(200)
                 .end()
                 .get('body');
@@ -348,14 +349,14 @@ describe('UserService', () => {
                 response,
                 {
                     id: sinon.match.string,
-                    email: 'other@mail.com',
+                    email: 'some@mail.com',
                     name: 'Petrovich',
                     createdAt: sinon.match.string,
                     updatedAt: sinon.match.string
                 });
         });
         
-        it('should return 400 if failed to update user when email already exists', async () => {
+        it('should return 400 if failed to update user when such name already exists', async () => {
             const user = await new User({ email: 'some@mail.com', name: 'Dmytry' }).save();
 
             await user.setPassword('somePass');
@@ -368,14 +369,14 @@ describe('UserService', () => {
                 .end()
                 .get('body');
 
-            await new User({ email: 'other@mail.com', name: 'Dmytry' }).save();
+            await new User({ email: 'other@mail.com', name: 'Helen' }).save();
 
             await request(server)
                 .put('/api/v1/user')
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .set('Authorization', token)
-                .send({ email: 'other@mail.com', name: 'Petrovich' })
+                .send({ email: 'some@mail.com', name: 'Helen' })
                 .expect(400)
                 .end();
         });

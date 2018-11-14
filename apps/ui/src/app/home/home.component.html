@@ -1,9 +1,6 @@
-﻿<h1>Hi {{currentUser.name}}!</h1>
-<p>You're logged in with Angular 7!!</p>
-<h3>All registered users:</h3>
+﻿<h1>Hi {{user.name}}!</h1>
 <ul>
-    <li *ngFor="let user of users">
-        {{user.name}} ({{user.email}})
-        - <a (click)="deleteUser(user.id)" class="text-danger">Delete</a>
-    </li>
+    <h2>{{user.name}}</h2>
+    <h2>{{user.email}}</h2>
+    <a routerLink="/profile" class="btn btn-link">Update profile</a>
 </ul>

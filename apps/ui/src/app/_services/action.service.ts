@@ -11,7 +11,7 @@ export class ActionService {
         return this.http.get<Action>(`${config.apiUrl}/actions/${id}`);
     }
 
-    submit(id: string, password: string) {
-        return this.http.put(`${config.apiUrl}/actions/${id}`, password);
+    submit(id: string, data: object) {
+        return this.http.put(`${config.apiUrl}/actions/${id}`, data, { responseType: 'text' });
     }
 }

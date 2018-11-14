@@ -49,10 +49,7 @@ export function errorHandler(err, req, res, next) {
  */
 export function websocketsErrorHandler(socket, requestId, error) {
     logger.error('Request error', error);
-    socket.emit('processingError', _composeErrorObject(error, requestId));
-    if (id < 0) {
-        id = 1;
-    }
+    socket.emit('error', _composeErrorObject(error, requestId));
 
     return Promise.resolve();
 }

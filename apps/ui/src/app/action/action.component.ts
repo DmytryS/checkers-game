@@ -49,33 +49,34 @@ export class ActionComponent implements OnInit {
         });
     }
 
-    // convenience getter for easy access to form fields
     get f() {
         return this.actionForm.controls;
     }
 
     onSubmit() {
         this.submitted = true;
-        // stop here if form is invalid
+
         if (this.actionForm.invalid) {
             return;
         }
 
         this.loading = true;
         
-        this.actionService.submit(this.id, this.actionForm.value.password)
+        this.actionService.submit(this.id, { password: this.actionForm.value.password })
             .pipe(first())
             .subscribe(
                 data => {
                     console.log(data);
-                    debugger;
-                    this.alertService.success('Registration successful 111', true);
+                    
+                    this.alertService.success('Password successfully set', true);
                     this.router.navigate(['/login']);
                 },
                 error => {
-                    debugger;
+                    console.log(error);
+                    
                     this.alertService.error(error);
                     this.loading = false;
-                });
+                }
+            );
     }
 }

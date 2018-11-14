@@ -9,9 +9,13 @@ passport.use(jwtStrategy);
 export default {
     initialize: () => passport.initialize(),
     authenticateJwt: function (req, res, next) {
-        passport.authenticate('jwt', { session: false }, (err, user) => { // eslint-disable-line
-            if(err || !user) {
-                reject(new UnauthorizedError(err.message ? err.message : err));
+        passport.authenticate('jwt', { session: false }, (err, user, info) => {
+            if(err) {
+                next(new UnauthorizedError(err.message ? err.message : err));
+            }
+
+            if(!user) {
+                next(new UnauthorizedError(info));
             }
 
             req.user = user;

@@ -9,7 +9,7 @@ import fs from 'fs';
 import config from '../../config/config';
 import routes from '../routes';
 import passport from './passport';
-import { NotFoundError, errorHandler } from './errorHandler';
+import { NotFoundError, errorHandler, websocketsErrorHandler } from './errorHandler';
 import { Game } from '../models';
 import redisClient from './redisClient';
 
@@ -34,13 +34,13 @@ export default class Service {
     async start() {
         const express = new Express();
 
-        express.use(Express.json());
         express.use(Express.urlencoded({ extended: false }));
+        express.use(Express.json());
         express.use(cookieParser());
         express.use(cors());
+        express.use(passport.initialize());
         express.use(this._config.baseUrl, routes.game);
         express.use(this._config.baseUrl, routes.user);
-        express.use(passport.initialize());
         express.use((req, res, next) => {
             next(new NotFoundError(`Could not find path ${ req.originalUrl }. Not found`, 404));
         });
@@ -67,9 +67,7 @@ export default class Service {
                     socket.on(key, routes.socketEvents[ key ].bind(null, socket, this._socket));
                 }
             })
-            .on('error', (error) => {
-                this._logger.error('Websocket error: ', error);
-            });
+            .on('error', websocketsErrorHandler);
 
 
         process.on('uncaughtException', (err) => {
