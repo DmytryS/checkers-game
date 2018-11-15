@@ -1,7 +1,13 @@
 {
   "name": "checkers-be",
   "version": "0.0.1",
-  "private": true,
+  "author": "Dmytry Shvaika (https://github.com/DmytryS)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DmytryS/checkers-game.git"
+  },
+  "bugs": "https://github.com/DmytryS/checkers-game/issues",
   "scripts": {
     "start": "node ./src/app.js",
     "nodemon": "nodemon --exec node ./src/app.js",

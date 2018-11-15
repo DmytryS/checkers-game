@@ -1,22 +1,25 @@
-# Checkers backend
+# Checkers game backend
 
-## Install
+## Prerequirements
+- Redis
+- MongoDB
 
-    $ git clone git@github.com:DmytryS/checkersApp.git
-    $ cd cd ~/Documents/checkersApp/apps/api
+
+## Installation
+
+    $ git clone git@github.com:DmytryS/checkers-game.git
+    $ cd ~/Documents/checkers-game/apps/api
+    $ cp config/config.json.sample config/config.json
     $ npm install
-
-### Configure app
-
-Copy `config.json.sample` to `config.json` then edit it
-
-## Start
-
     $ npm start
 
 ## Check coverage with istanbul
 
     $ npm run test:coverage-check
+
+## Run tests
+
+    $ npm run test
 
 ## Check lint
 
