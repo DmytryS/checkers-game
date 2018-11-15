@@ -2,7 +2,7 @@
     "port": 3000,
     "db": {
         "type": "mongo",
-        "url": "mongodb://127.0.0.1:27017/checkers-be"
+        "url": "mongodb://127.0.0.1:27017/checkers-game-be"
     },
     "logger": {
         "path": "logs",
@@ -27,5 +27,5 @@
     "secretKey": "Sample_Key",
     "saltRounds": 12,
     "minPasswordLength": 6,
-    "uiUrl": "http://localhost"
+    "uiUrl": "http://localhost:8080"
 }
