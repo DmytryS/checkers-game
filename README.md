@@ -3,3 +3,5 @@
 ## Installation
 
     $ git clone git@github.com:DmytryS/checkers-game.git
+
+some test change
